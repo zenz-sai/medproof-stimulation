@@ -1,0 +1,76 @@
+import { createContext, useContext, useState, useEffect } from 'react';
+
+const DataContext = createContext();
+
+export function DataProvider({ children }) {
+  // --- DEFAULT DATA SEEDING FROM WIREFRAMES ---
+  const initialConsents = [
+    { id: 1, name: 'Priya Sharma', phone: '+91 98765 43210', purpose: 'Treatment + Reports', date: 'Today, 10:32 AM', status: 'Active', proofHash: '0x3a1b4c...iome' },
+    { id: 2, name: 'Rahul Verma', phone: '+91 87654 32109', purpose: 'Treatment Only', date: 'Today, 09:15 AM', status: 'Active', proofHash: '0x9e2f5d...iome' },
+    { id: 3, name: 'Anita Patel', phone: '+91 76543 21098', purpose: 'Treatment + Marketing', date: 'Yesterday', status: 'Active', proofHash: '0x7c8b1a...iome' },
+    { id: 4, name: 'Vikram Singh', phone: '+91 65432 10987', purpose: 'Treatment + Reports', date: 'Jan 22, 2026', status: 'Withdrawn', proofHash: '0x4f5e6d...iome' }
+  ];
+
+  const initialReports = [
+    { id: 1, name: 'Priya Sharma', test: 'Blood Test', sent: '10:32 AM', delivered: '10:32 AM', viewed: '10:45 AM', status: 'Viewed' },
+    { id: 2, name: 'Rahul Verma', test: 'X-Ray Report', sent: '09:15 AM', delivered: '09:15 AM', viewed: '09:30 AM', status: 'Viewed' },
+    { id: 3, name: 'Anita Patel', test: 'MRI Scan', sent: '08:45 AM', delivered: '08:45 AM', viewed: null, status: 'Delivered' },
+    { id: 4, name: 'Vikram Singh', test: 'Blood Test', sent: '08:00 AM', delivered: 'Pending', viewed: null, status: 'Pending' }
+  ];
+
+  const initialActivity = [
+    { id: 1, user: 'Priya Sharma', action: 'Consent collected', time: '2 min ago' },
+    { id: 2, user: 'Rahul Verma', action: 'Lab report delivered', time: '5 min ago' }
+  ];
+
+  // --- STATE MANAGERS WITH LOCALSTORAGE HYDRATION ---
+  const [consents, setConsents] = useState(() => JSON.parse(localStorage.getItem('mp_consents')) || initialConsents);
+  const [reports, setReports] = useState(() => JSON.parse(localStorage.getItem('mp_reports')) || initialReports);
+  const [activities, setActivities] = useState(() => JSON.parse(localStorage.getItem('mp_activities')) || initialActivity);
+  const [breachState, setBreachState] = useState(() => JSON.parse(localStorage.getItem('mp_breach')) || { active: false, timestamp: null, elapsed: 0 });
+
+  useEffect(() => {
+    localStorage.setItem('mp_consents', JSON.stringify(consents));
+  }, [consents]);
+
+  useEffect(() => {
+    localStorage.setItem('mp_reports', JSON.stringify(reports));
+  }, [reports]);
+
+  useEffect(() => {
+    localStorage.setItem('mp_activities', JSON.stringify(activities));
+  }, [activities]);
+
+  useEffect(() => {
+    localStorage.setItem('mp_breach', JSON.stringify(breachState));
+  }, [breachState]);
+
+  // --- AGENTIC MUTATION HELPERS ---
+  const triggerSimulationAction = async (type) => {
+    if (type === 'WITHDRAW_PRIYA') {
+      setConsents(prev => prev.map(c => c.name === 'Priya Sharma' ? { ...c, status: 'Withdrawn' } : c));
+      setActivities(prev => [{ id: Date.now(), user: 'Priya Sharma', action: 'Consent withdrawn via patient portal', time: 'Just now' }, ...prev]);
+    } else if (type === 'SIMULATE_BATCH_LAB') {
+      const newReport = { id: Date.now(), name: 'Priya Sharma', test: 'Routine CBC Test', sent: 'Just now', delivered: 'Just now', viewed: null, status: 'Delivered' };
+      setReports(prev => [newReport, ...prev]);
+      setActivities(prev => [{ id: Date.now(), user: 'Priya Sharma', action: 'Bulk verified & auto-routed', time: 'Just now' }, ...prev]);
+    } else if (type === 'BREACH_TRIGGER') {
+      setBreachState({ active: true, timestamp: new Date().toLocaleTimeString(), elapsed: 0 });
+      setActivities(prev => [{ id: Date.now(), user: 'System Sec', action: 'Data anomaly detected: 72H countdown initialized', time: 'Just now' }, ...prev]);
+    } else if (type === 'CLEAR_ALL') {
+      localStorage.clear();
+      setConsents(initialConsents);
+      setReports(initialReports);
+      setActivities(initialActivity);
+      setBreachState({ active: false, timestamp: null, elapsed: 0 });
+    }
+  };
+
+  return (
+    <DataContext.Provider value={{ consents, setConsents, reports, setReports, activities, breachState, triggerSimulationAction }}>
+      {children}
+    </DataContext.Provider>
+  );
+}
+
+export const useData = () => useContext(DataContext);

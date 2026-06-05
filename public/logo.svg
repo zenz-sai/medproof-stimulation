@@ -1,0 +1,21 @@
+<svg width="300" height="80" viewBox="0 0 300 80" fill="none" xmlns="http://www.w3.org/2000/svg">
+  <!-- Shield icon -->
+  <g transform="translate(10, 5) scale(0.7)">
+    <!-- Shield outer -->
+    <path d="M50 5 L90 20 L90 50 C90 75 70 92 50 97 C30 92 10 75 10 50 L10 20 L50 5Z" fill="#1B4F72"/>
+    <!-- Shield inner -->
+    <path d="M50 15 L80 27 L80 50 C80 70 65 83 50 87 C35 83 20 70 20 50 L20 27 L50 15Z" fill="#2874A6"/>
+    <!-- Medical cross vertical -->
+    <rect x="43" y="30" width="14" height="35" fill="white" rx="2"/>
+    <!-- Medical cross horizontal -->
+    <rect x="33" y="40" width="34" height="14" fill="white" rx="2"/>
+    <!-- Checkmark -->
+    <path d="M35 55 L45 65 L68 40" stroke="#27AE60" stroke-width="6" stroke-linecap="round" stroke-linejoin="round" fill="none"/>
+  </g>
+  
+  <!-- Text -->
+  <text x="90" y="52" font-family="Arial, sans-serif" font-size="36" font-weight="bold" fill="#1B4F72">MedProof</text>
+  
+  <!-- Tagline -->
+  <text x="90" y="70" font-family="Arial, sans-serif" font-size="12" fill="#6B7280">DPDP Compliance for Healthcare</text>
+</svg>
