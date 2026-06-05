@@ -29,6 +29,31 @@ export function DataProvider({ children }) {
   const [breachState, setBreachState] = useState(() => JSON.parse(localStorage.getItem('mp_breach')) || { active: false, timestamp: null, elapsed: 0 });
   const [currentSession, setCurrentSession] = useState(() => JSON.parse(localStorage.getItem('mp_active_session')) || null);
 
+  // --- CROSS-TAB REALTIME SYNCHRONIZER ENGINE ---
+  useEffect(() => {
+    const handleCrossTabUpdates = (event) => {
+      if (event.key === 'mp_consents' && event.newValue) {
+        setConsents(JSON.parse(event.newValue));
+      }
+      if (event.key === 'mp_reports' && event.newValue) {
+        setReports(JSON.parse(event.newValue));
+      }
+      if (event.key === 'mp_activities' && event.newValue) {
+        setActivities(JSON.parse(event.newValue));
+      }
+      if (event.key === 'mp_breach' && event.newValue) {
+        setBreachState(JSON.parse(event.newValue));
+      }
+      if (event.key === 'mp_active_session') {
+        setCurrentSession(event.newValue ? JSON.parse(event.newValue) : null);
+      }
+    };
+
+    // Listen to changes coming from other browser tabs
+    window.addEventListener('storage', handleCrossTabUpdates);
+    return () => window.removeEventListener('storage', handleCrossTabUpdates);
+  }, []);
+
   useEffect(() => { localStorage.setItem('mp_consents', JSON.stringify(consents)); }, [consents]);
   useEffect(() => { localStorage.setItem('mp_reports', JSON.stringify(reports)); }, [reports]);
   useEffect(() => { localStorage.setItem('mp_activities', JSON.stringify(activities)); }, [activities]);
@@ -37,8 +62,13 @@ export function DataProvider({ children }) {
 
   const triggerSimulationAction = async (type) => {
     if (type === 'WITHDRAW_PRIYA') {
-      setConsents(prev => prev.map(c => c.name === 'Priya Sharma' ? { ...c, status: 'Withdrawn' } : c));
-      setActivities(prev => [{ id: Date.now(), user: 'Priya Sharma', action: 'Consent withdrawn via patient portal', time: 'Just now' }, ...prev]);
+      const updated = consents.map(c => c.name === 'Priya Sharma' ? { ...c, status: 'Withdrawn' } : c);
+      setConsents(updated);
+      const acts = [{ id: Date.now(), user: 'Priya Sharma', action: 'Consent withdrawn via patient portal', time: 'Just now' }, ...activities];
+      setActivities(acts);
+      // Explicitly trigger a local dispatch so current window reacts immediately if triggered locally
+      localStorage.setItem('mp_consents', JSON.stringify(updated));
+      localStorage.setItem('mp_activities', JSON.stringify(acts));
     } else if (type === 'SIMULATE_BATCH_LAB') {
       const newReport = { 
         id: Date.now(), 

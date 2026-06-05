@@ -27,9 +27,12 @@ export default function ReportDelivery() {
       return;
     }
 
+    // Inside src/components/ReportDelivery.jsx -> handleSendReport function:
     const sourceName = currentSession ? currentSession.name : 'City Hospital';
     const dynamicToken = `token_${Math.floor(Math.random() * 900000 + 100000)}`;
-    const linkUrl = `${window.location.origin}/user?access=${dynamicToken}&from=${encodeURIComponent(sourceName)}`;
+    
+    // NEW: Append explicit, unique patientId parameters dynamically into the SMS link string
+    const linkUrl = `${window.location.origin}/user?access=${dynamicToken}&from=${encodeURIComponent(sourceName)}&pId=${targetPatient.id}`;
 
     // Generate cryptographic proof of sending
     const trackingPayload = {
