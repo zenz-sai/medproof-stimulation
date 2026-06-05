@@ -4,12 +4,17 @@ import { generateMOIProof } from '../utils/cryptoEngine';
 import { FileCheck, Send, Clock, AlertTriangle, FileSpreadsheet, Eye, ShieldCheck, HelpCircle } from 'lucide-react';
 
 export default function HospitalDashboard() {
-  const { consents, reports, activities, breachState } = useData();
+  // Open src/components/HospitalDashboard.jsx, find the calculation variable references near the top (around line 10):
+  const { consents, reports, activities, breachState, currentSession } = useData(); // Add currentSession here
+
+  // Dynamic values matched directly to your selected facility session parameters dynamically!
+  const baseIndexModifier = currentSession ? currentSession.baseConsents : 1243;
+  const activeConsentsCount = consents.filter(c => c.status === 'Active').length + baseIndexModifier;
+
   const [activeProof, setActiveProof] = useState(null);
   const [showHelp, setShowHelp] = useState(false);
 
   // Dynamic values matched directly to your official wireframe benchmarks
-  const activeConsentsCount = consents.filter(c => c.status === 'Active').length + 1243; 
   const reportsSentToday = reports.length + 85; 
   const pendingDeliveries = reports.filter(r => r.status === 'Pending').length + 11;
   const activeBreaches = breachState.active ? 1 : 0;
@@ -24,7 +29,7 @@ export default function HospitalDashboard() {
     <div className="w-full space-y-8 animate-fadeIn text-slate-900">
       
       {/* PROFESSIONAL WELCOME & EXPLANATION BANNER */}
-      <div className="bg-gradient-to-r from-slate-900 via-slate-850 to-slate-900 text-white p-6 rounded-2xl border border-slate-800 shadow-xl flex flex-col md:flex-row md:items-center justify-between gap-4">
+      <div className="bg-linear-to-r from-slate-900 via-slate-850 to-slate-900 text-white p-6 rounded-2xl border border-slate-800 shadow-xl flex flex-col md:flex-row md:items-center justify-between gap-4">
         <div className="space-y-1">
           <div className="flex items-center space-x-2">
             <h1 className="text-xl font-bold tracking-tight">City Hospital Compliance Control Panel</h1>
@@ -162,7 +167,7 @@ export default function HospitalDashboard() {
         </div>
 
         {/* ACCESSIBLE EXPORT LOG HUB BAR */}
-        <div className="bg-gradient-to-b from-slate-850 to-slate-900 rounded-2xl p-6 text-slate-100 shadow-xl border border-slate-950 flex flex-col justify-between">
+        <div className="bg-linear-to-b from-slate-700 to-slate-950 rounded-2xl p-6 text-slate-100 shadow-xl border border-slate-950 flex flex-col justify-between">
           <div className="space-y-4">
             <div className="p-3 bg-teal-500/10 border border-teal-500/20 rounded-xl inline-block text-teal-400">
               <FileSpreadsheet className="w-6 h-6" />

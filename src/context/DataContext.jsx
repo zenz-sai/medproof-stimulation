@@ -1,9 +1,9 @@
-import { createContext, useContext, useState, useEffect } from 'react';
+import React, { createContext, useContext, useState, useEffect } from 'react';
 
 const DataContext = createContext();
 
 export function DataProvider({ children }) {
-  // --- DEFAULT DATA SEEDING FROM WIREFRAMES ---
+  // --- DEFAULT SEEDED DATA ---
   const initialConsents = [
     { id: 1, name: 'Priya Sharma', phone: '+91 98765 43210', purpose: 'Treatment + Reports', date: 'Today, 10:32 AM', status: 'Active', proofHash: '0x3a1b4c...iome' },
     { id: 2, name: 'Rahul Verma', phone: '+91 87654 32109', purpose: 'Treatment Only', date: 'Today, 09:15 AM', status: 'Active', proofHash: '0x9e2f5d...iome' },
@@ -23,35 +23,33 @@ export function DataProvider({ children }) {
     { id: 2, user: 'Rahul Verma', action: 'Lab report delivered', time: '5 min ago' }
   ];
 
-  // --- STATE MANAGERS WITH LOCALSTORAGE HYDRATION ---
   const [consents, setConsents] = useState(() => JSON.parse(localStorage.getItem('mp_consents')) || initialConsents);
   const [reports, setReports] = useState(() => JSON.parse(localStorage.getItem('mp_reports')) || initialReports);
   const [activities, setActivities] = useState(() => JSON.parse(localStorage.getItem('mp_activities')) || initialActivity);
   const [breachState, setBreachState] = useState(() => JSON.parse(localStorage.getItem('mp_breach')) || { active: false, timestamp: null, elapsed: 0 });
+  const [currentSession, setCurrentSession] = useState(() => JSON.parse(localStorage.getItem('mp_active_session')) || null);
 
-  useEffect(() => {
-    localStorage.setItem('mp_consents', JSON.stringify(consents));
-  }, [consents]);
+  useEffect(() => { localStorage.setItem('mp_consents', JSON.stringify(consents)); }, [consents]);
+  useEffect(() => { localStorage.setItem('mp_reports', JSON.stringify(reports)); }, [reports]);
+  useEffect(() => { localStorage.setItem('mp_activities', JSON.stringify(activities)); }, [activities]);
+  useEffect(() => { localStorage.setItem('mp_breach', JSON.stringify(breachState)); }, [breachState]);
+  useEffect(() => { localStorage.setItem('mp_active_session', JSON.stringify(currentSession)); }, [currentSession]);
 
-  useEffect(() => {
-    localStorage.setItem('mp_reports', JSON.stringify(reports));
-  }, [reports]);
-
-  useEffect(() => {
-    localStorage.setItem('mp_activities', JSON.stringify(activities));
-  }, [activities]);
-
-  useEffect(() => {
-    localStorage.setItem('mp_breach', JSON.stringify(breachState));
-  }, [breachState]);
-
-  // --- AGENTIC MUTATION HELPERS ---
   const triggerSimulationAction = async (type) => {
     if (type === 'WITHDRAW_PRIYA') {
       setConsents(prev => prev.map(c => c.name === 'Priya Sharma' ? { ...c, status: 'Withdrawn' } : c));
       setActivities(prev => [{ id: Date.now(), user: 'Priya Sharma', action: 'Consent withdrawn via patient portal', time: 'Just now' }, ...prev]);
     } else if (type === 'SIMULATE_BATCH_LAB') {
-      const newReport = { id: Date.now(), name: 'Priya Sharma', test: 'Routine CBC Test', sent: 'Just now', delivered: 'Just now', viewed: null, status: 'Delivered' };
+      const newReport = { 
+        id: Date.now(), 
+        name: 'Priya Sharma', 
+        test: 'Routine CBC Test', 
+        sent: 'Just now', 
+        delivered: 'Just now', 
+        viewed: null, 
+        status: 'Delivered',
+        simulatedLink: `${window.location.origin}/user?access=token_${Math.floor(Math.random() * 900000 + 100000)}&from=${currentSession ? encodeURIComponent(currentSession.name) : 'Provider'}`
+      };
       setReports(prev => [newReport, ...prev]);
       setActivities(prev => [{ id: Date.now(), user: 'Priya Sharma', action: 'Bulk verified & auto-routed', time: 'Just now' }, ...prev]);
     } else if (type === 'BREACH_TRIGGER') {
@@ -67,7 +65,7 @@ export function DataProvider({ children }) {
   };
 
   return (
-    <DataContext.Provider value={{ consents, setConsents, reports, setReports, activities, breachState, triggerSimulationAction }}>
+    <DataContext.Provider value={{ consents, setConsents, reports, setReports, activities, setActivities, breachState, currentSession, setCurrentSession, triggerSimulationAction }}>
       {children}
     </DataContext.Provider>
   );

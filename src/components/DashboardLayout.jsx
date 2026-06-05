@@ -1,9 +1,9 @@
 import React, { useState } from 'react';
 import { useData } from '../context/DataContext';
-import { Shield, LayoutDashboard, FileCheck, Send, AlertOctagon, Terminal, Sparkles, RefreshCw } from 'lucide-react';
+import { Shield, LayoutDashboard, FileCheck, Send, AlertOctagon, Terminal, LogOut, RotateCcw } from 'lucide-react';
 
-export default function DashboardLayout({ currentTab, setTab, children }) {
-  const { breachState, triggerSimulationAction } = useData();
+export default function DashboardLayout({ currentTab, setTab, children, onLogout }) {
+  const { breachState, currentSession, triggerSimulationAction } = useData();
   const [showInspector, setShowInspector] = useState(false);
 
   const navigationItems = [
@@ -13,18 +13,29 @@ export default function DashboardLayout({ currentTab, setTab, children }) {
     { id: 'breach', name: 'Breach Notification', icon: AlertOctagon },
   ];
 
+  const handleSystemReset = () => {
+    if (window.confirm("Are you sure you want to restore the demonstration data back to its initial default values?")) {
+      triggerSimulationAction('CLEAR_ALL');
+      window.location.reload();
+    }
+  };
+
   return (
     <div className="min-h-screen w-screen bg-slate-50 flex font-sans overflow-x-hidden">
       
-      {/* SIDEBAR NAVIGATION FRAMEWORK */}
+      {/* SIDEBAR NAVIGATION FRAMEWORK CONTAINER */}
       <aside className="w-64 bg-slate-900 text-slate-100 flex flex-col shrink-0 border-r border-slate-950 shadow-xl">
         <div className="p-5 flex items-center space-x-3 bg-slate-950">
-          <div className="p-2 bg-teal-500/10 border border-teal-500/30 rounded-xl">
-            <Shield className="w-5 h-5 text-teal-400" />
+          <div className="p-2 bg-teal-500/10 border border-teal-500/30 rounded-xl text-teal-400">
+            <Shield className="w-5 h-5" />
           </div>
-          <div>
-            <h1 className="font-black text-base tracking-tight text-white">MedProof</h1>
-            <span className="text-[10px] font-bold tracking-wider uppercase text-teal-400">DPDP Compliance</span>
+          <div className="text-left">
+            <h1 className="font-black text-sm tracking-tight text-white truncate max-w-[160px]">
+              {currentSession ? currentSession.name : "Facility Node"}
+            </h1>
+            <span className="text-[10px] font-bold tracking-wider uppercase text-teal-400">
+              {currentSession ? currentSession.tier : "DPDP Compliance"}
+            </span>
           </div>
         </div>
 
@@ -49,20 +60,49 @@ export default function DashboardLayout({ currentTab, setTab, children }) {
           })}
         </nav>
 
-        <div className="p-4 bg-slate-950 text-center text-[10px] font-bold uppercase tracking-wider text-slate-500 border-t border-slate-900">
-          Facility Node Active
+        {/* BOTTOM UTILITY ACTIONS FOOTER BLOCK */}
+        <div className="bg-slate-950 border-t border-slate-900 divide-y divide-slate-900/60">
+          
+          {/* Environment Reset Bar */}
+          {/* <div className="p-2.5 flex justify-center">
+            <button
+              onClick={handleSystemReset}
+              className="w-full flex items-center justify-center space-x-1.5 py-2 bg-slate-900/40 hover:bg-slate-900 border border-slate-800/80 rounded-lg text-slate-400 hover:text-white text-[11px] font-bold transition shadow-sm"
+            >
+              <RotateCcw className="w-3.5 h-3.5 text-teal-500" />
+              <span>Reset Demo Database</span>
+            </button>
+          </div> */}
+
+          {/* Session Metadata Info & Exit Node */}
+          <div className="p-3 flex items-center justify-between">
+            <div className="text-[9px] font-mono font-semibold text-slate-500 truncate max-w-30">
+              {currentSession ? currentSession.location : "Node: Active"}
+            </div>
+            <button 
+              onClick={() => {
+                handleSystemReset();
+                onLogout()
+              }}
+              className="flex items-center space-x-1 px-2.5 py-1 bg-slate-900 hover:bg-rose-950 border border-slate-800 hover:border-rose-900 rounded-lg text-slate-400 hover:text-rose-400 text-[10px] font-bold transition"
+            >
+              <LogOut className="w-3 h-3" />
+              <span>Logout</span>
+            </button>
+          </div>
+
         </div>
       </aside>
 
-      {/* EXPANSIVE MAIN WINDOW VIEW CONTAINER */}
+      {/* MAIN LAYOUT CANVAS HEADER AND CORE VIEWPORTS AREA */}
       <main className="flex-1 flex flex-col min-w-0 bg-slate-50 relative min-h-screen">
         <header className="h-16 bg-white border-b border-slate-200 px-6 flex items-center justify-between shadow-sm shrink-0">
           <div className="flex items-center space-x-3">
-            <h2 className="text-base font-bold text-slate-800 tracking-tight capitalize">{currentTab} Operations Hub</h2>
+            <h2 className="text-base font-bold text-slate-800 tracking-tight capitalize">{currentTab} Hub</h2>
             {breachState.active && (
               <div className="flex items-center space-x-1.5 bg-rose-50 border border-rose-200 px-2.5 py-0.5 rounded-full text-[10px] text-rose-600 font-bold animate-pulse">
                 <span className="w-1.5 h-1.5 rounded-full bg-rose-600"></span>
-                <span>DPDP 72H Alert Window Active</span>
+                <span>DPDP 72H Window Active</span>
               </div>
             )}
           </div>
@@ -72,77 +112,29 @@ export default function DashboardLayout({ currentTab, setTab, children }) {
             className="flex items-center space-x-1.5 px-3 py-1.5 bg-slate-50 hover:bg-slate-100 text-slate-700 text-xs font-bold rounded-lg border border-slate-200 shadow-sm transition"
           >
             <Terminal className="w-3.5 h-3.5 text-teal-600" />
-            <span>{showInspector ? "Hide Security Monitor" : "Open Security Monitor"}</span>
+            <span>{showInspector ? "Hide Monitor" : "Open Monitor"}</span>
           </button>
         </header>
 
-        {/* VIEW BODY CORE CONTAINER */}
         <div className="flex-1 p-6 md:p-8 overflow-y-auto w-full max-w-full">
           {children}
         </div>
 
-        {/* ACCESSIBLE INTERACTIVE DEMO CONTROLLER */}
-        <div className="fixed bottom-6 right-6 z-40 bg-white border border-slate-200 p-4 rounded-xl shadow-2xl w-72 font-sans">
-          <div className="flex items-center justify-between mb-2.5 border-b border-slate-100 pb-2">
-            <div className="flex items-center space-x-1.5 text-teal-600 font-bold text-xs uppercase tracking-wider">
-              <Sparkles className="w-3.5 h-3.5" />
-              <span>Demo Quick Controls</span>
-            </div>
-            <button 
-              onClick={() => triggerSimulationAction('CLEAR_ALL')} 
-              title="Reset data back to original default layout values"
-              className="text-slate-400 hover:text-slate-600 transition"
-            >
-              <RefreshCw className="w-3.5 h-3.5" />
-            </button>
-          </div>
-          
-          <p className="text-[10px] text-slate-400 mb-3 leading-relaxed">
-            Use these quick test triggers to simulate real-world workflow actions and see how the dashboard updates immediately.
-          </p>
-
-          <div className="space-y-1.5 text-xs">
-            <button 
-              onClick={() => triggerSimulationAction('WITHDRAW_PRIYA')}
-              className="w-full text-left px-2.5 py-2 bg-slate-50 hover:bg-slate-100 border border-slate-200 text-slate-700 font-semibold rounded-lg transition flex items-center justify-between"
-            >
-              <span>Patient withdraws consent</span>
-              <span className="text-[9px] px-1 bg-amber-100 text-amber-800 rounded font-bold">Portal Link</span>
-            </button>
-            <button 
-              onClick={() => triggerSimulationAction('SIMULATE_BATCH_LAB')}
-              className="w-full text-left px-2.5 py-2 bg-slate-50 hover:bg-slate-100 border border-slate-200 text-slate-700 font-semibold rounded-lg transition flex items-center justify-between"
-            >
-              <span>Receive bulk lab reports</span>
-              <span className="text-[9px] px-1 bg-teal-100 text-teal-800 rounded font-bold">Lab System</span>
-            </button>
-            <button 
-              onClick={() => triggerSimulationAction('BREACH_TRIGGER')}
-              className="w-full text-left px-2.5 py-2 bg-rose-50 hover:bg-rose-100 border border-rose-200 text-rose-800 font-semibold rounded-lg transition flex items-center justify-between"
-            >
-              <span>Trigger sample system threat</span>
-              <span className="text-[9px] px-1 bg-rose-600 text-white rounded font-bold">Alert</span>
-            </button>
-          </div>
-        </div>
-
-        {/* CLEAN BACKEND AUDIT TRAILS EXPLANATION PANEL */}
+        {/* Live Trail Streams Panel Drawer */}
         {showInspector && (
           <div className="absolute right-0 top-16 bottom-0 w-80 bg-slate-900 text-slate-200 p-5 font-sans text-xs overflow-y-auto shadow-2xl z-30 border-l border-slate-950">
             <h3 className="text-teal-400 font-bold uppercase tracking-wider text-xs border-b border-slate-800 pb-2 mb-3 flex items-center space-x-1.5">
               <Terminal className="w-4 h-4" />
-              <span>Live System Security Stream</span>
+              <span>Ledger Monitor</span>
             </h3>
             <p className="text-slate-400 text-[11px] leading-relaxed mb-4">
-              This panel shows the underlying data confirmations that the hospital system creates automatically behind the scenes to lock your audit history.
+              Session payload credentials trace.
             </p>
             <div className="bg-slate-950 p-3 rounded-lg border border-slate-800 font-mono text-[11px] text-slate-300">
-              <p className="text-emerald-400">// Local Security Status</p>
-              <p>Node_Status: ONLINE</p>
-              <p>Active_Breach_Alerts: {breachState.active ? "YES" : "NO"}</p>
-              <p className="text-slate-500 mt-2">// Internal Security Buffer</p>
-              <p>Consent_Logs: 4 active</p>
-              <p>Delivery_Receipts: 4 locked</p>
+              <p className="text-emerald-400">// Handshake Authorized</p>
+              <p>Issuer: {currentSession ? currentSession.name : "Unknown"}</p>
+              <p>Tier_Class: {currentSession ? currentSession.tier : "Default"}</p>
+              <p>Node_Status: SECURE_CONNECTED</p>
             </div>
           </div>
         )}
