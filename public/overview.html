@@ -1,0 +1,671 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>MedProof — Frictionless DPDP Trust Infrastructure</title>
+    <link rel="preconnect" href="https://fonts.googleapis.com">
+    <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
+    <link href="https://fonts.googleapis.com/css2?family=Plus+Jakarta+Sans:wght@400;500;600;700&family=Space+Grotesk:wght@500;700&display=swap" rel="stylesheet">
+    <link rel="stylesheet" href="https://cdnjs.cloudflare.com/ajax/libs/font-awesome/6.5.1/css/all.min.css">
+    
+    <style>
+        /* ==========================================================================
+           1. CORE STYLING & VARIABLES (Participant-Centric Web3 Aesthetic)
+           ========================================================================== */
+        :root {
+            --bg-dark: #070a12;
+            --bg-card: #0f1524;
+            --text-light: #f3f4f6;
+            --text-muted: #9ca3af;
+            --mint: #10b981;
+            --mint-glow: rgba(16, 185, 129, 0.12);
+            --teal: #06b6d4;
+            --teal-glow: rgba(6, 182, 212, 0.12);
+            --border: #1e293b;
+            --alert-red: #ef4444;
+            --alert-glow: rgba(239, 68, 68, 0.1);
+        }
+
+        * {
+            box-sizing: border-box;
+            margin: 0;
+            padding: 0;
+        }
+
+        body {
+            background-color: var(--bg-dark);
+            color: var(--text-light);
+            font-family: 'Plus Jakarta Sans', sans-serif;
+            overflow-x: hidden;
+        }
+
+        h1, h2, h3, h4, .brand-font {
+            font-family: 'Space Grotesk', sans-serif;
+            font-weight: 700;
+        }
+
+        /* Nav Bar */
+        nav {
+            position: fixed;
+            top: 0;
+            width: 100%;
+            padding: 20px 40px;
+            display: flex;
+            justify-content: space-between;
+            align-items: center;
+            background: linear-gradient(to bottom, var(--bg-dark) 60%, transparent);
+            z-index: 100;
+        }
+
+        .logo {
+            font-size: 24px;
+            color: var(--text-light);
+            display: flex;
+            align-items: center;
+            gap: 10px;
+        }
+
+        .logo span { color: var(--mint); }
+
+        .nav-badge {
+            background: rgba(255,255,255,0.03);
+            border: 1px solid var(--border);
+            padding: 6px 16px;
+            border-radius: 30px;
+            font-size: 12px;
+            font-weight: 600;
+            letter-spacing: 1px;
+            text-transform: uppercase;
+            color: var(--teal);
+        }
+
+        /* ==========================================================================
+           2. SCROLLYTELLING LAYOUT SYSTEM
+           ========================================================================== */
+        .scrolly-container {
+            position: relative;
+            width: 100%;
+        }
+
+        /* Left Side: The Sticky Narrative Frame */
+        .story-track {
+            position: relative;
+            width: 50%;
+            padding-left: 10%;
+            padding-right: 5%;
+            z-index: 2;
+        }
+
+        /* Full height blocks to trigger scroll indices */
+        .story-step {
+            min-height: 100vh;
+            display: flex;
+            flex-direction: column;
+            justify-content: center;
+            padding: 80px 0;
+            opacity: 0.2;
+            transition: opacity 0.4s ease, transform 0.4s ease;
+            transform: translateY(20px);
+        }
+
+        .story-step.active {
+            opacity: 1;
+            transform: translateY(0);
+        }
+
+        .rule-badge {
+            align-self: flex-start;
+            background: var(--alert-glow);
+            border: 1px solid rgba(239, 68, 68, 0.3);
+            color: var(--alert-red);
+            font-size: 11px;
+            font-weight: 700;
+            padding: 6px 12px;
+            border-radius: 6px;
+            margin-bottom: 20px;
+            text-transform: uppercase;
+            letter-spacing: 0.5px;
+            display: flex;
+            align-items: center;
+            gap: 8px;
+        }
+
+        .rule-badge.compliant {
+            background: var(--mint-glow);
+            border-color: rgba(16, 185, 129, 0.3);
+            color: var(--mint);
+        }
+
+        .story-step h2 {
+            font-size: 40px;
+            line-height: 1.2;
+            margin-bottom: 20px;
+        }
+
+        .story-step p {
+            font-size: 17px;
+            line-height: 1.6;
+            color: var(--text-muted);
+            margin-bottom: 25px;
+        }
+
+        /* Right Side: Fixed Visual canvas */
+        .visual-canvas {
+            position: fixed;
+            top: 0;
+            right: 0;
+            width: 50%;
+            height: 100vh;
+            display: flex;
+            align-items: center;
+            justify-content: center;
+            padding: 40px;
+            z-index: 1;
+            pointer-events: none;
+        }
+
+        .visual-viewport {
+            width: 100%;
+            max-width: 540px;
+            height: 580px;
+            position: relative;
+            pointer-events: auto;
+        }
+
+        /* Persistent Graphical Assets */
+        .graphic-state {
+            position: absolute;
+            width: 100%;
+            height: 100%;
+            top: 0;
+            left: 0;
+            opacity: 0;
+            transform: scale(0.95) translateY(10px);
+            transition: opacity 0.5s ease, transform 0.5s cubic-bezier(0.16, 1, 0.3, 1);
+            display: flex;
+            align-items: center;
+            justify-content: center;
+            pointer-events: none;
+        }
+
+        .graphic-state.visible {
+            opacity: 1;
+            transform: scale(1) translateY(0);
+            pointer-events: auto;
+        }
+
+        /* ==========================================================================
+           3. SCREEN-SPECIFIC INTERACTIVE GRAPHICS
+           ========================================================================== */
+        
+        /* Persistent App Panels / Hardware Mockups */
+        .mock-device {
+            background: var(--bg-card);
+            border: 2px solid var(--border);
+            border-radius: 24px;
+            width: 100%;
+            height: 100%;
+            padding: 30px;
+            display: flex;
+            flex-direction: column;
+            box-shadow: 0 30px 60px rgba(0,0,0,0.4);
+            position: relative;
+        }
+
+        .panel-header {
+            display: flex;
+            justify-content: space-between;
+            align-items: center;
+            border-bottom: 1px solid rgba(255,255,255,0.06);
+            padding-bottom: 15px;
+            margin-bottom: 20px;
+            font-size: 14px;
+        }
+
+        /* State 1: Risk graphic */
+        .risk-matrix {
+            display: flex;
+            flex-direction: column;
+            gap: 15px;
+            width: 100%;
+        }
+        .risk-row {
+            background: rgba(239, 68, 68, 0.03);
+            border: 1px solid rgba(239, 68, 68, 0.1);
+            border-radius: 12px;
+            padding: 16px 20px;
+            display: flex;
+            align-items: center;
+            gap: 20px;
+        }
+        .risk-row i {
+            font-size: 24px;
+            color: var(--alert-red);
+        }
+
+        /* State 2: Dashboard/QR Setup */
+        .qr-display-area {
+            text-align: center;
+            margin: auto 0;
+        }
+        .qr-box {
+            width: 200px;
+            height: 200px;
+            background: #fff;
+            margin: 0 auto 20px auto;
+            border-radius: 16px;
+            display: flex;
+            align-items: center;
+            justify-content: center;
+            position: relative;
+            box-shadow: 0 0 30px rgba(6, 182, 212, 0.2);
+        }
+        .qr-box i { font-size: 160px; color: var(--bg-dark); }
+        .ai-pulse-tag {
+            position: absolute;
+            bottom: -10px;
+            background: var(--teal);
+            color: var(--bg-dark);
+            font-size: 11px;
+            font-weight: 700;
+            padding: 4px 12px;
+            border-radius: 20px;
+            text-transform: uppercase;
+        }
+
+        /* State 3: User App Prompt */
+        .consent-prompt-box {
+            background: rgba(255,255,255,0.02);
+            border: 1px dashed rgba(255,255,255,0.1);
+            padding: 20px;
+            border-radius: 12px;
+            margin: auto 0;
+        }
+        .btn-action-group {
+            display: flex;
+            gap: 15px;
+            margin-top: 20px;
+        }
+        .btn-fill {
+            flex: 2;
+            background: var(--mint);
+            color: var(--bg-dark);
+            border: none;
+            padding: 14px;
+            border-radius: 8px;
+            font-weight: 700;
+            font-size: 14px;
+            text-align: center;
+        }
+
+        /* State 4: Guardian Layer Diagram */
+        .guardian-stack {
+            display: flex;
+            flex-direction: column;
+            gap: 12px;
+            width: 100%;
+            margin: auto 0;
+        }
+        .guardian-node {
+            background: rgba(255,255,255,0.01);
+            border: 1px solid var(--border);
+            border-radius: 12px;
+            padding: 20px;
+            display: flex;
+            align-items: center;
+            gap: 20px;
+        }
+        .guardian-node.highlight {
+            border-color: var(--teal);
+            background: var(--teal-glow);
+        }
+        .gn-icon {
+            width: 44px;
+            height: 44px;
+            background: rgba(255,255,255,0.03);
+            border-radius: 8px;
+            display: flex;
+            align-items: center;
+            justify-content: center;
+            color: var(--mint);
+            font-size: 18px;
+        }
+        .guardian-node.highlight .gn-icon {
+            color: var(--teal);
+            background: rgba(6,182,212,0.1);
+        }
+        .gn-text h5 { font-size: 16px; margin-bottom: 2px; }
+        .gn-text p { font-size: 13px; color: var(--text-muted); }
+
+        /* State 5: Incident Logging System */
+        .log-terminal {
+            background: #04060a;
+            border: 1px solid var(--border);
+            border-radius: 12px;
+            padding: 20px;
+            font-family: monospace;
+            font-size: 13px;
+            color: #34d399;
+            flex-grow: 1;
+            overflow-y: auto;
+            display: flex;
+            flex-direction: column;
+            gap: 10px;
+        }
+        .log-entry {
+            line-height: 1.4;
+            border-left: 2px solid var(--mint);
+            padding-left: 10px;
+        }
+        .log-entry.alert {
+            border-color: var(--alert-red);
+            color: #f87171;
+        }
+
+        /* State 6: Flywheel Network Graphic */
+        .network-hubs {
+            display: grid;
+            grid-template-columns: repeat(2, 1fr);
+            gap: 20px;
+            width: 100%;
+            margin: auto 0;
+        }
+        .hub-card {
+            background: rgba(255,255,255,0.02);
+            border: 1px solid var(--border);
+            border-radius: 12px;
+            padding: 20px;
+            text-align: center;
+        }
+        .hub-card i { font-size: 28px; color: var(--mint); margin-bottom: 12px; }
+        .hub-card h5 { font-size: 16px; margin-bottom: 4px; }
+        .hub-card p { font-size: 12px; color: var(--text-muted); }
+
+        /* Progress Dots Indicators */
+        .scroll-indicator {
+            position: fixed;
+            left: 40px;
+            top: 50%;
+            transform: translateY(-50%);
+            display: flex;
+            flex-direction: column;
+            gap: 15px;
+            z-index: 100;
+        }
+        .dot {
+            width: 8px;
+            height: 8px;
+            background: var(--border);
+            border-radius: 50%;
+            transition: all 0.3s ease;
+        }
+        .dot.active {
+            background: var(--mint);
+            transform: scale(1.4);
+            box-shadow: 0 0 10px var(--mint);
+        }
+    </style>
+</head>
+<body>
+
+    <nav>
+        <!-- <div class="logo"><i class="fa-solid fa-shield-halved" style="color:var(--mint);"></i> Med<span>Proof</span></div>
+        <div class="nav-badge">DPDP Trust Layer Protocol</div> -->
+        <img src="./logo.svg" height="64px" />
+    </nav>
+
+    <div class="scroll-indicator">
+        <div class="dot active"></div>
+        <div class="dot"></div>
+        <div class="dot"></div>
+        <div class="dot"></div>
+        <div class="dot"></div>
+        <div class="dot"></div>
+    </div>
+
+    <div class="scrolly-container">
+        
+        <div class="story-track">
+            
+            <div class="story-step active" data-index="0">
+                <div class="rule-badge"><i class="fa-solid fa-triangle-exclamation"></i> DPDP Section 8: Fiduciary Liability</div>
+                <h2>The Compliance Chasm for SMB Healthcare</h2>
+                <p>The Digital Personal Data Protection (DPDP) Act legalizes consumer privacy, forcing every diagnostic lab, local clinic, and medical facility to step up as a regulated <strong>Data Fiduciary</strong>.</p>
+                <p>Traditional fast-paced actions—such as routing lab updates or image scans via legacy consumer messaging software or unencrypted email chains—carry an existential risk profile: immediate regulatory penalties capping at <strong>₹250 Crore</strong> for data mishandling.</p>
+            </div>
+
+            <div class="story-step" data-index="1">
+                <div class="rule-badge compliant"><i class="fa-solid fa-circle-check"></i> DPDP Section 6: Notice Requirements</div>
+                <h2>Dynamic Setup: Contextual & Clear</h2>
+                <p>To operate legally, facilities must provide a transparent notice detailing exactly what health information is required and for what precise processing objective.</p>
+                <p>MedProof automates this burden entirely. A diagnostic operator opens their pre-configured system profile and selects a tailored <strong>'Radiology Sharing Consent'</strong> asset configuration. A native AI agent instantly computes the rules into a token representation and outputs an itemized transaction QR code on screen.</p>
+            </div>
+
+            <div class="story-step" data-index="2">
+                <div class="rule-badge compliant"><i class="fa-solid fa-circle-check"></i> DPDP Section 7: Unambiguous Consent</div>
+                <h2>The Interaction: Two Taps to Verification</h2>
+                <p>DPDP states that consent must be explicit, conditional, specific, and revocable. It cannot be buried inside standard end-user license fine print.</p>
+                <p>The patient simply brings up their secure <strong>Mobile Health Wallet application</strong> and scans the provider's screen. The interface strips down complex legalese into clear, simple options. By authorizing the prompt, verifiable explicit consent is generated natively without creating real-world friction inside the laboratory reception workspace.</p>
+            </div>
+
+            <div class="story-step" data-index="3">
+                <div class="rule-badge compliant"><i class="fa-solid fa-circle-check"></i> DPDP Section 11-14: Rights of Principal</div>
+                <h2>The Guardian Layer: Native Privacy Protection</h2>
+                <p>Traditional architecture stores identity tokens and file pathways on single centralized servers, establishing prime hacking targets. MedProof removes this threat architecture entirely by running a silent cryptographic trust backend.</p>
+                <p>The system decouples the entire operational workflow across dedicated infrastructure nodes: identity matching travels through <strong>IOMe</strong>, encrypted information slices reside inside <strong>Kapsul</strong>, and lifecycle access controls are managed by <strong>MOI Blockchain smart contracts</strong>. Seamless peer-to-peer transmission is coordinated exclusively by <strong>Treo</strong>, ensuring records travel safely from the facility directly to the app without lingering on temporary servers.</p>
+            </div>
+
+            <div class="story-step" data-index="4">
+                <div class="rule-badge"><i class="fa-solid fa-bullhorn"></i> DPDP Section 8(6): Breach Notification</div>
+                <h2>Automated Security Ledger & Incident Tracking</h2>
+                <p>Data Fiduciaries are statutorily required to notify the Data Protection Board and every affected citizen instantly if an operational anomaly or breach signature occurs.</p>
+                <p>MedProof implements an immutable <strong>Incident Logging Engine</strong> right into the core architecture ledger. Every modification, expired token window, data access query, or authorization change is permanently captured. If an unauthorized infrastructure access query trips the smart contract rules, the ledger automatically locks down data streams and prints an auditable security trail instantly ready for compliance review.</p>
+            </div>
+
+            <div class="story-step" data-index="5">
+                <div class="rule-badge compliant"><i class="fa-solid fa-arrows-spin"></i> Value Architecture compounding</div>
+                <h2>The Ecosystem Network Flywheel</h2>
+                <p>By transforming compliance from a forced regulatory penalty burden into an invisible, lightweight routine, MedProof unlocks continuous architectural value for every network participant.</p>
+                <p>Hospitals and clinics gain complete insulation against statutory liabilities while completely skipping administrative overhead. Concurrently, citizens cultivate a lifetime, sovereign medical database profile inside their personal Health Wallet—giving them total command over their historical clinical timeline across multiple laboratory providers.</p>
+            </div>
+
+        </div>
+
+        <div class="visual-canvas">
+            <div class="visual-viewport">
+                
+                <div class="graphic-state visible" id="stage-0">
+                    <div class="mock-device">
+                        <div class="panel-header">
+                            <span><i class="fa-solid fa-radiation"></i> Legacy Workflow Assessment</span>
+                            <span style="color:var(--alert-red);"><i class="fa-solid fa-circle-nodes"></i> Non-Compliant</span>
+                        </div>
+                        <div class="risk-matrix">
+                            <div class="risk-row">
+                                <i class="fa-brands fa-whatsapp"></i>
+                                <div>
+                                    <h5 style="margin-bottom:2px;">WhatsApp Lab Dispatch</h5>
+                                    <p style="font-size:12px; color:var(--text-muted);">Data resides permanently on consumer cloud storage hubs. Violates privacy.</p>
+                                </div>
+                            </div>
+                            <div class="risk-row">
+                                <i class="fa-solid fa-envelope-open-text"></i>
+                                <div>
+                                    <h5 style="margin-bottom:2px;">Unencrypted Email Files</h5>
+                                    <p style="font-size:12px; color:var(--text-muted);">Zero tracking verifying receipt or access expiry windows.</p>
+                                </div>
+                            </div>
+                            <div class="risk-row" style="background:rgba(239,68,68,0.08); border-color:var(--alert-red);">
+                                <i class="fa-solid fa-gavel"></i>
+                                <div>
+                                    <h5 style="color:var(--alert-red); margin-bottom:2px;">DPDP Fine Exposure</h5>
+                                    <p style="font-size:12px; color:var(--text-muted);">Up to ₹250 Cr statutory penalties for leaking unverified pipelines.</p>
+                                </div>
+                            </div>
+                        </div>
+                    </div>
+                </div>
+
+                <div class="graphic-state" id="stage-1">
+                    <div class="mock-device" style="border-color: var(--teal);">
+                        <div class="panel-header">
+                            <span><i class="fa-solid fa-display"></i> Provider Administration Console</span>
+                            <span style="color:var(--teal); font-weight:600;"><i class="fa-solid fa-robot"></i> AI Template Active</span>
+                        </div>
+                        <div class="qr-display-area">
+                            <div class="qr-box">
+                                <i class="fa-solid fa-qrcode"></i>
+                                <div class="ai-pulse-tag"><i class="fa-solid fa-bolt"></i> Notice Token Verified</div>
+                            </div>
+                            <h4 style="margin-bottom:4px;">Radiology Sharing Notice</h4>
+                            <p style="font-size:13px; color:var(--text-muted);">Dynamic permissions restricted to standard X-Ray processing logs.</p>
+                        </div>
+                    </div>
+                </div>
+
+                <div class="graphic-state" id="stage-2">
+                    <div class="mock-device" style="border-color: var(--mint);">
+                        <div class="panel-header">
+                            <span><i class="fa-solid fa-mobile-screen-button"></i> Mobile Health Wallet</span>
+                            <span style="color:var(--mint); font-weight:600;"><i class="fa-solid fa-id-badge"></i> User App Mode</span>
+                        </div>
+                        <div class="consent-prompt-box">
+                            <div style="display:flex; align-items:center; gap:12px; margin-bottom:12px;">
+                                <i class="fa-solid fa-shield-halved" style="color:var(--mint); font-size:20px;"></i>
+                                <h5 style="font-size:15px;">DPDP Compliant Request</h5>
+                            </div>
+                            <p style="font-size:13px; color:var(--text-light); line-height:1.5;">Do you grant explicit permission to the provider node to write file pointers and access identity parameters for your upcoming clinical lab data?</p>
+                        </div>
+                        <div class="btn-action-group">
+                            <div style="flex:1; border:1px solid var(--border); border-radius:8px; padding:14px; text-align:center; font-size:13px; font-weight:600;">Deny</div>
+                            <button class="btn-fill" style="box-shadow: 0 0 15px var(--mint-glow);"><i class="fa-solid fa-fingerprint"></i> Authorize Notice</button>
+                        </div>
+                    </div>
+                </div>
+
+                <div class="graphic-state" id="stage-3">
+                    <div class="mock-device">
+                        <div class="panel-header">
+                            <span><i class="fa-solid fa-server"></i> Guardian Architecture Map</span>
+                            <span style="color:var(--teal);"><i class="fa-solid fa-network-wired"></i> Core Edge Stack</span>
+                        </div>
+                        <div class="guardian-stack">
+                            <div class="guardian-node">
+                                <div class="gn-icon"><i class="fa-solid fa-passport"></i></div>
+                                <div class="gn-text"><h5>IOMe Layer</h5><p>Decentralized User Identity Token Base</p></div>
+                            </div>
+                            <div class="guardian-node">
+                                <div class="gn-icon"><i class="fa-solid fa-box-archive"></i></div>
+                                <div class="gn-text"><h5>Kapsul Protocol</h5><p>Sharded, Encrypted Partition Storage</p></div>
+                            </div>
+                            <div class="guardian-node">
+                                <div class="gn-icon"><i class="fa-solid fa-cubes"></i></div>
+                                <div class="gn-text"><h5>MOI Blockchain</h5><p>Smart Contract Consent Tracking States</p></div>
+                            </div>
+                            <div class="guardian-node highlight">
+                                <div class="gn-icon"><i class="fa-solid fa-circle-nodes"></i></div>
+                                <div class="gn-text"><h5>Treo Secure Engine</h5><p>Direct P2P Secure Communication Pipeline</p></div>
+                            </div>
+                        </div>
+                    </div>
+                </div>
+
+                <div class="graphic-state" id="stage-4">
+                    <div class="mock-device" style="border-color: var(--alert-red);">
+                        <div class="panel-header">
+                            <span><i class="fa-solid fa-terminal"></i> DPDP Compliance Log Engine</span>
+                            <span style="color:var(--mint); font-weight:600;"><i class="fa-solid fa-fingerprint"></i> Immutable</span>
+                        </div>
+                        <div class="log-terminal">
+                            <div class="log-entry">[SYSTEM_INIT] MedProof Logging Active...</div>
+                            <div class="log-entry">[CONSENT_GRANTED] User Token verified via IOMe Gateway.</div>
+                            <div class="log-entry">[STORAGE_SHARD] Payload written to secure Kapsul partition location.</div>
+                            <div class="log-entry">[CONTRACT_STATE] MOI Blockchain updated: access expires in +30 days.</div>
+                            <div class="log-entry alert">[INCIDENT_TRIGGER] Unauthorized external access query intercepted on node 12. Lock triggered.</div>
+                            <div class="log-entry">[LOG_SEALED] Cryptographic audit report generated for regulatory inspection.</div>
+                        </div>
+                    </div>
+                </div>
+
+                <div class="graphic-state" id="stage-5">
+                    <div class="mock-device" style="border-color: var(--mint);">
+                        <div class="panel-header">
+                            <span><i class="fa-solid fa-chart-line"></i> Value Ecosystem Architecture</span>
+                            <span style="color:var(--mint); font-weight:600;"><i class="fa-solid fa-arrows-spin"></i> Active Loop</span>
+                        </div>
+                        <div class="network-hubs">
+                            <div class="hub-card">
+                                <i class="fa-solid fa-square-h"></i>
+                                <h5>Healthcare Node</h5>
+                                <p>Automated absolute legal protection from regulatory fines.</p>
+                            </div>
+                            <div class="hub-card">
+                                <i class="fa-solid fa-wallet"></i>
+                                <h5>Patient Wallet</h5>
+                                <p>Portable, self-owned lifetime sovereign health database history.</p>
+                            </div>
+                            <div class="hub-card" style="grid-column: span 2; border-color:rgba(16,185,129,0.2); background:var(--mint-glow);">
+                                <i class="fa-solid fa-diagram-project" style="color:var(--mint);"></i>
+                                <h5>Compounding Ecosystem Network Effect</h5>
+                                <p style="font-size:13px; color:var(--text-light); margin-top:4px;">Every incremental laboratory added amplifies user data compilation value, building a highly defensive data flywheel.</p>
+                            </div>
+                        </div>
+                    </div>
+                </div>
+
+            </div>
+        </div>
+
+    </div>
+
+    <script>
+        const steps = document.querySelectorAll('.story-step');
+        const graphics = document.querySelectorAll('.graphic-state');
+        const dots = document.querySelectorAll('.dot');
+
+        function updateScrollytelling() {
+            let activeIndex = 0;
+            const triggerBreakpoint = window.innerHeight * 0.45;
+
+            steps.forEach((step, index) => {
+                const elementBox = step.getBoundingClientRect();
+                // Check if element has scrolled past the mid-level breakpoint line
+                if (elementBox.top <= triggerBreakpoint) {
+                    activeIndex = index;
+                }
+            });
+
+            // Sync visual states on threshold crossing
+            steps.forEach((step, index) => {
+                if (index === activeIndex) {
+                    step.classList.add('active');
+                } else {
+                    step.classList.remove('active');
+                }
+            });
+
+            graphics.forEach((graphic, index) => {
+                if (index === activeIndex) {
+                    graphic.classList.add('visible');
+                } else {
+                    graphic.classList.remove('visible');
+                }
+            });
+
+            dots.forEach((dot, index) => {
+                if (index === activeIndex) {
+                    dot.classList.add('active');
+                } else {
+                    dot.classList.remove('active');
+                }
+            });
+        }
+
+        window.addEventListener('scroll', updateScrollytelling);
+        window.addEventListener('resize', updateScrollytelling);
+        // Initial run to ensure positions establish correctly on load
+        updateScrollytelling();
+    </script>
+</body>
+</html>

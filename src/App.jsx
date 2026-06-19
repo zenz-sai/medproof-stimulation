@@ -161,44 +161,44 @@ function AppContent() {
 
         {/* RIGHT PANEL: INFO ACCREDITATION BRAND WALL */}
         <div className="hidden md:flex flex-1 bg-gradient-to-br from-slate-950 via-slate-900 to-slate-950 flex-col justify-between p-12 relative overflow-hidden">
-          <div className="absolute inset-0 bg-[linear-gradient(to_right,#0f172a_1px,transparent_1px),linear-gradient(to_bottom,#0f172a_1px,transparent_1px)] bg-[size:4rem_4rem] opacity-20" />
+          <div className="absolute inset-0 bg-[linear-gradient(to_right,#0f172a_1px,transparent_1px),linear-gradient(to_bottom,#0f172a_1px,transparent_1px)] bg-size-[4rem_4rem] opacity-20" />
           
           <div className="grid grid-cols-2 gap-6 relative z-10 text-left">
             <div className="bg-slate-900/60 p-4 rounded-xl border border-slate-800/60 backdrop-blur-sm space-y-1">
-              <span className="text-rose-400 text-[10px] font-bold uppercase tracking-wider block">The DPDP Mandate 2023 [cite: 31]</span>
+              <span className="text-rose-400 text-[10px] font-bold uppercase tracking-wider block">The DPDP Mandate 2023</span>
               <p className="text-xs text-slate-300 leading-relaxed pt-1">
-                Every single healthcare facility is now legally classified as a <strong>'Data Fiduciary'</strong> [cite: 9, 226], facing fines up to <strong className="text-white font-bold">₹250 Crore</strong> for data mishandling errors[cite: 9, 251].
+                Every single healthcare facility is now legally classified as a <strong>'Data Fiduciary'</strong>, facing fines up to <strong className="text-white font-bold">₹250 Crore</strong> for data mishandling errors.
               </p>
             </div>
             <div className="bg-slate-900/60 p-4 rounded-xl border border-slate-800/60 backdrop-blur-sm space-y-1">
               <span className="text-teal-400 text-[10px] font-bold uppercase tracking-wider block">Compliance Countdown</span>
               <p className="text-xs text-slate-300 leading-relaxed pt-1">
-                India's formal privacy enforcement implementation window ends exactly in <strong className="text-white font-bold">May 2027</strong>[cite: 10, 34]. No legal exemptions or extensions are available[cite: 249].
+                India's formal privacy enforcement implementation window ends exactly in <strong className="text-white font-bold">May 2027</strong>. No legal exemptions or extensions are available.
               </p>
             </div>
           </div>
 
           <div className="max-w-xl text-left space-y-4 relative z-10 my-auto py-12">
             <h2 className="text-3xl font-black text-white tracking-tight leading-tight">
-              The Simple, Tamper-Proof Solution for India's 150,000+ SMB Healthcare Facilities[cite: 4, 19].
+              The Simple, Tamper-Proof Solution for India's 150,000+ SMB Healthcare Facilities.
             </h2>
             <p className="text-sm text-slate-400 leading-relaxed font-normal">
-              MedProof bridges the technical execution gap for small hospitals and diagnostics labs[cite: 19, 229]. By managing <strong>Consent Management</strong>, <strong>Report Delivery</strong>, and <strong>Breach Notifications</strong> inside decentralized, hospital-controlled node frameworks, we deliver total legal protection with everyday simplicity[cite: 21, 230].
+              MedProof bridges the technical execution gap for small hospitals and diagnostics labs. By managing <strong>Consent Management</strong>, <strong>Report Delivery</strong>, and <strong>Breach Notifications</strong> inside decentralized, hospital-controlled node frameworks, we deliver total legal protection with everyday simplicity.
             </p>
           </div>
 
           <div className="grid grid-cols-3 gap-4 border-t border-slate-800/80 pt-6 relative z-10 text-left">
             <div>
               <span className="text-[10px] uppercase font-bold tracking-wider text-slate-500 block">Total Target Addressable Market</span>
-              <strong className="text-xl font-black text-white block mt-0.5">272,000+ [cite: 13, 372]</strong>
+              <strong className="text-xl font-black text-white block mt-0.5">272,000+</strong>
             </div>
             <div>
               <span className="text-[10px] uppercase font-bold tracking-wider text-slate-500 block">Serviceable SMB Segment</span>
-              <strong className="text-xl font-black text-teal-400 block mt-0.5">72,000+ [cite: 17, 373]</strong>
+              <strong className="text-xl font-black text-teal-400 block mt-0.5">72,000+</strong>
             </div>
             <div>
               <span className="text-[10px] uppercase font-bold tracking-wider text-slate-500 block">Financial Projections Target</span>
-              <strong className="text-xl font-black text-white block mt-0.5">₹54 Crore ARR [cite: 23, 375]</strong>
+              <strong className="text-xl font-black text-white block mt-0.5">₹54 Crore ARR</strong>
             </div>
           </div>
         </div>

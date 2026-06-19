@@ -1,326 +1,411 @@
 import React, { useState } from 'react';
 import { useData } from '../context/DataContext';
 import { generateMOIProof } from '../utils/cryptoEngine';
-import { Search, UserPlus, CheckCircle, XCircle, ShieldCheck, Eye, HelpCircle } from 'lucide-react';
+import { QrCode, HatGlasses, ShieldCheck, CheckCircle2, MessageSquare, Terminal, Eye, HelpCircle, SendHorizontal, Smartphone, RefreshCw, Layers } from 'lucide-react';
 
 export default function ConsentCollection() {
-  const { consents, setConsents, setActivities } = useData();
-  const [searchTerm, setSearchTerm] = useState('');
+  const { currentSession, consents, setConsents, setActivities } = useData();
+  
+  // Presentation States
+  const [activeQrPayload, setActiveQrPayload] = useState(null);
+  const [isProcessingContract, setIsProcessingContract] = useState(false);
+  const [naturalLanguageInput, setNaturalLanguageInput] = useState('');
   const [activeReceipt, setActiveReceipt] = useState(null);
-  const [showExplanation, setShowExplanation] = useState(true);
 
-  // Form states for adding a quick new patient consent form
-  const [showAddForm, setShowAddForm] = useState(false);
-  const [newName, setNewName] = useState('');
-  const [newPhone, setNewPhone] = useState('');
-  const [newPurpose, setNewPurpose] = useState('Treatment + Reports');
+  // NEW: Multi-Phase Simulation State Tracker ('idle' | 'generating' | 'deployed' | 'scanning' | 'syncing')
+  const [simPhase, setSimPhase] = useState('idle');
+  const [activeTargetModules, setActiveTargetModules] = useState('');
+  const [activeTargetScope, setActiveTargetScope] = useState('');
+  
+  // AX CHAT HISTORY STATE
+  const [chatLog, setChatLog] = useState([
+    { role: 'agent', message: 'Hello! Welcome to the MedProof.' },
+    { role: 'agent', message: 'I can assist you in generating a DPDP compliance QR contract. Please select one of my pre-defined service templates below, or describe the customized treatment authorization required in the chat.' }
+  ]);
 
-  // 1. Search filter logic
-  const filteredConsents = consents.filter(patient => 
-    patient.name.toLowerCase().includes(searchTerm.toLowerCase()) ||
-    patient.phone.includes(searchTerm)
-  );
+  // Pre-populated Agentic Prompts Matrix
+  const predefinedAgenticPrompts = [
+    { id: 'p1', label: 'Blood Test Authorization', prompt: 'Create CBC and Lipid Profile authorization. Set scope to Read/Write and expiry to 7 days.' },
+    { id: 'p2', label: 'MRI/CT Scan Consent', prompt: 'Generate authorization for Brain MRI Scan Slices. Set scope to Read Only mode. Set standard 30-day expiry.' },
+    { id: 'tpl_diabates', label: 'HbA1c/Diabetes Screening', 
+      prompt: 'Create authorization for Glucose levels screening. Access should expire in 48 hours.'},
+    { id: 'p3', label: 'General Vitals Check', prompt: 'Setup permission for basic Vitals Log and Prescription Sheet. Access should expire in 72 hours.' }
+  ];
 
-  // 2. Action: Revoke/Withdraw Consent instantly
-  const handleToggleStatus = (patientId, currentStatus, patientName) => {
-    const updatedStatus = currentStatus === 'Active' ? 'Withdrawn' : 'Active';
-    
-    setConsents(prev => prev.map(item => {
-      if (item.id === patientId) {
-        return { ...item, status: updatedStatus };
-      }
-      return item;
-    }));
-
-    // Add a simple history message to our dashboard feed
-    setActivities(prev => [{
-      id: Date.now(),
-      user: patientName,
-      action: `Consent settings manually updated to [${updatedStatus}] by front desk`,
-      time: 'Just now'
-    }, ...prev]);
+  // ACTION 1: AX Prompt Injection Logic
+  const handleSelectPromptOption = (promptText) => {
+    setNaturalLanguageInput(promptText);
+    console.log("Injected Prompt context: ", promptText);
   };
 
-  // 3. Action: Generate cryptographic audit proof on demand
-  const handleViewProof = async (patient) => {
-    const proofPayload = {
-      patientName: patient.name,
-      contact: patient.phone,
-      authorizedPermissions: patient.purpose,
-      currentLegalStatus: patient.status
+  // ACTION 2: Execute AI Transaction Compile & QR Generation pipeline
+  const handleSubmitAgenticRequest = async (e) => {
+    e.preventDefault();
+    if (!naturalLanguageInput.trim()) return;
+
+    const userMessage = naturalLanguageInput.trim();
+    setChatLog(prev => [...prev, { role: 'user', message: userMessage }, { role: 'agent', message: 'Understood. Parsing the intent...' }]);
+    
+    setNaturalLanguageInput(''); // Reset input box
+    setIsProcessingContract(true);
+    setActiveQrPayload(null);
+    setSimPhase('generating');
+
+    // Parse variables locally to display in the upcoming tracking milestones
+    const text = userMessage.toLowerCase();
+    let permissions = 'Read Only';
+    let validity = 3;
+    let modules = 'Vitals + Diagnosis';
+
+    if (text.includes('read/write') || text.includes('full access') || text.includes('reports')) permissions = 'Read/Write';
+    if (text.includes('7 days') || text.includes('week')) validity = 7;
+    if (text.includes('30 days') || text.includes('month')) validity = 30;
+    if (text.includes('48 hours') || text.includes('48h')) validity = 2;
+    if (text.includes('cbc') || text.includes('lipid')) modules = 'CBC + Lipid Summary';
+    if (text.includes('mri') || text.includes('ct')) modules = 'Radiology Scans';
+    if (text.includes('glucose') || text.includes('diabetes')) modules = 'Glucose Screening';
+
+    setActiveTargetModules(modules);
+    setActiveTargetScope(permissions);
+
+    setTimeout(async () => {
+      const contractPayload = {
+        issuingFacility: currentSession ? currentSession.name : "City Community Hospital",
+        identityGateway: "IOMe Decentralized ID Gateway",
+        storageProtocol: "kapsul",
+        permissionsScope: permissions,
+        validityWindowSeconds: validity * 86400,
+        authorizedFields: modules,
+        nonceToken: `req_${Math.floor(Math.random() * 100000 + 900000)}`
+      };
+
+      const cryptoFingerprint = await generateMOIProof(contractPayload);
+      
+      const finalContractState = {
+        ...contractPayload,
+        smartContractAddress: cryptoFingerprint.nodeSignature,
+        storageRootHash: cryptoFingerprint.kapsulRoot,
+        qrStringData: `moi://consent_request?token=${cryptoFingerprint.kapsulRoot}&fac=${encodeURIComponent(contractPayload.issuingFacility)}`
+      };
+
+      localStorage.setItem('mp_pending_qr_contract', JSON.stringify(finalContractState));
+      setActiveQrPayload(finalContractState);
+      setIsProcessingContract(false);
+      setSimPhase('deployed');
+
+      setChatLog(prev => [...prev, { role: 'agent', message: `QR code initialized. Instruct the patient to scan it now. Permission locked: ${modules} (${permissions}) valid for ${validity} days.` }]);
+    }, 1200);
+  };
+
+  // NEW SLICK ACTION: Triggers the multi-phase animation flow sequence for the pitch
+  const runLiveHandshakeSimulation = () => {
+    if (!activeQrPayload) return;
+    
+    // Phase 1: Trigger Patient Scan Screen (1.5 Seconds)
+    setSimPhase('scanning');
+    
+    setTimeout(() => {
+      // Phase 2: Trigger IOMe Decentralized Blockchain Consent Sharing (2.0 Seconds)
+      setSimPhase('syncing');
+      
+      setTimeout(() => {
+        // Final Execution: Commit to table ledger, notify backoffice dashboard log history, and reset loops
+        const randomizedPatientNodeId = `${Math.floor(Math.random() * 9000 + 1000)}`;
+        
+        const newLedgerRow = {
+          id: Date.now(),
+          name: randomizedPatientNodeId, 
+          purpose: `${activeTargetModules} (${activeTargetScope})`,
+          date: 'Just now',
+          status: 'Active'
+        };
+
+        setConsents(prev => [newLedgerRow, ...prev]);
+        
+        setActivities(prev => [{
+          id: Date.now(),
+          user: "IOMe Gateway",
+          action: `Cryptographic consent signed and broadcasted to MOI Smart Contract for ${activeTargetModules}`,
+          time: 'Just now'
+        }, ...prev]);
+
+        // Clean slate reset back to the default AX home page triggers layout
+        setActiveQrPayload(null);
+        setSimPhase('idle');
+        setChatLog([
+          { role: 'agent', message: 'Hello! Welcome to the MedProof.' },
+          { role: 'agent', message: 'Prior transaction verified successfully. Ready to build your next DPDP compliance QR contract block.' }
+        ]);
+
+        setChatLog(prev => [...prev, { role: 'agent', message: `'${newLedgerRow.name.startsWith('did:iome:') ? newLedgerRow.name : 'did:iome:id_' + Math.floor(newLedgerRow.id / 100000)}': Wallet Signature Handshake Verified! Transaction anchored on ledger successfully.` }]);
+      }, 2000); // Phase 2: 2000ms duration
+    }, 1500); // Phase 1: 1500ms duration
+  };
+
+  const handleOpenReceiptModal = async (patient) => {
+    const historicalPayload = {
+      recordScope: patient.purpose,
+      legalAnchoring: "MOI Smart Contract Verified",
+      storageTarget: "Kapsul Private Vault Protocol Room"
     };
-    
-    const cryptoResult = await generateMOIProof(proofPayload);
-    
+    const cryptoProof = await generateMOIProof(historicalPayload);
+
     setActiveReceipt({
       name: patient.name,
       purpose: patient.purpose,
+      date: patient.date,
       status: patient.status,
-      digitalLock: cryptoResult.kapsulRoot,
-      signatureKey: cryptoResult.nodeSignature,
-      timestamp: cryptoResult.blockTimestamp
+      blockHash: cryptoProof.kapsulRoot,
+      nodeKey: cryptoProof.nodeSignature
     });
   };
 
-  // 4. Action: Save a new incoming consent entry
-  const handleCreateConsent = async (e) => {
-    e.preventDefault();
-    if (!newName || !newPhone) return alert('Please enter a name and phone number.');
-
-    const initialPayload = { name: newName, phone: newPhone, purpose: newPurpose, status: 'Active' };
-    const cryptoResult = await generateMOIProof(initialPayload);
-
-    const newEntry = {
-      id: Date.now(),
-      name: newName,
-      phone: newPhone,
-      purpose: newPurpose,
-      date: 'Just now',
-      status: 'Active',
-      proofHash: cryptoResult.nodeSignature
-    };
-
-    setConsents(prev => [newEntry, ...prev]);
-    setActivities(prev => [{
-      id: Date.now(),
-      user: newName,
-      action: 'Completed digital consent sign-up form',
-      time: 'Just now'
-    }, ...prev]);
-
-    // Reset Form fields
-    setNewName('');
-    setNewPhone('');
-    setShowAddForm(false);
-  };
-
   return (
-    <div className="w-full space-y-6 animate-fadeIn text-slate-900">
+    <div className="w-full space-y-6 animate-fadeIn text-slate-900 text-left relative select-none">
       
-      {/* HEADER SECTION */}
-      <div className="flex flex-col sm:flex-row sm:items-center justify-between gap-4 border-b border-slate-200 pb-5">
-        <div>
-          <h1 className="text-xl font-bold tracking-tight text-slate-800">Patient Consent Ledger</h1>
-          <p className="text-xs text-slate-500 mt-1">
-            Track, update, and print official digital permission records for your patients.
-          </p>
-        </div>
-
-        <button
-          onClick={() => setShowAddForm(!showAddForm)}
-          className="flex items-center justify-center space-x-2 px-4 py-2 bg-teal-600 hover:bg-teal-500 text-white text-xs font-bold rounded-xl shadow-sm transition self-start sm:self-auto"
-        >
-          <UserPlus className="w-4 h-4" />
-          <span>New Patient Authorization</span>
-        </button>
+      {/* HEADER PAGE TITLE BLOCK */}
+      <div className="border-b border-slate-200 pb-5">
+        <h1 className="text-xl font-bold tracking-tight text-slate-800 m-0">DPDP Consent Collection</h1>
+        <p className="text-xs text-slate-500 mt-1">
+          Chat with the MedProof AI Agent to dynamically compile verifiable data access request contracts.
+        </p>
       </div>
 
-      {/* PLAIN LANGUAGE EXPLANATION */}
-      {showExplanation && (
-        <div className="bg-slate-900 text-slate-100 p-4 rounded-xl border border-slate-950 shadow-sm flex items-start justify-between gap-4 text-xs">
-          <div className="space-y-1">
-            <span className="text-teal-400 font-bold uppercase tracking-wider text-[10px] block">Receptionist Guide</span>
-            <p className="text-slate-300 leading-relaxed">
-              Under India's DPDP law, a hospital cannot send medical files or marketing messages without explicit permission. If an inspector requests an audit trail, use the <strong>"View Digital Receipt"</strong> button below to show immediate, encrypted proof of consent.
-            </p>
-          </div>
-          <button onClick={() => setShowExplanation(false)} className="text-slate-500 hover:text-slate-300 font-bold transition">✕</button>
-        </div>
-      )}
+      <div className="grid grid-cols-1 lg:grid-cols-5 gap-6 items-start">
+        
+        {/* AX LAYER BLOCK A: THE INTERACTIVE CONVERSATIONAL INTERFACE (AGENT WINDOW) */}
+        <div className="lg:col-span-3 space-y-6">
+          <div className="bg-white p-5 rounded-2xl border border-slate-200 shadow-sm flex flex-col h-[480px]">
+            <div className="flex items-center space-x-2 text-teal-600 font-bold text-xs uppercase tracking-wider pb-3 border-b border-slate-100 mb-4">
+              <HatGlasses className="w-4 h-4 animate-pulse" />
+              <span>MedProof Automated Setup Assistant</span>
+            </div>
+            
+            {/* Conversations history viewport */}
+            <div className="flex-1 overflow-y-auto space-y-4 px-1 text-xs">
+              {chatLog.map((chat, idx) => (
+                <div key={idx} className={`flex ${chat.role === 'user' ? 'justify-end' : 'justify-start'}`}>
+                  <div className={`max-w-[85%] px-3.5 py-2.5 rounded-xl ${chat.role === 'user' ? 'bg-slate-900 text-slate-100' : 'bg-slate-100 text-slate-800'}`}>
+                    <p className="leading-relaxed font-medium">{chat.message}</p>
+                  </div>
+                </div>
+              ))}
+            </div>
 
-      {/* QUICK ADD NEW FORM VIEW OVERLAY CONTAINER */}
-      {showAddForm && (
-        <form onSubmit={handleCreateConsent} className="bg-white p-5 rounded-xl border border-slate-200 shadow-md max-w-xl space-y-4 animate-slideDown">
-          <h3 className="text-xs font-bold uppercase text-slate-400 tracking-wider">Register Patient Authorization Form</h3>
+            {/* PRE-POPULATED PROMPT OPTION CHIPS GRID SEGMENT */}
+            {simPhase === 'idle' && (
+              <div className="space-y-2 pt-4 border-t border-slate-100 mt-4">
+                <span className="text-[10px] font-bold tracking-wider text-slate-400 uppercase">Pre-defined Agentic prompts:</span>
+                <div className="grid grid-cols-1 md:grid-cols-2 gap-2 text-left">
+                  {predefinedAgenticPrompts.map(prompt => (
+                    <button 
+                      key={prompt.id} type="button" onClick={() => handleSelectPromptOption(prompt.prompt)}
+                      className="px-3 py-1.5 bg-slate-50 hover:bg-teal-50 text-slate-700 hover:text-teal-900 text-[11px] font-semibold border border-slate-200/80 hover:border-teal-300 rounded-lg transition text-left truncate"
+                    >
+                      {prompt.label}
+                    </button>
+                  ))}
+                </div>
+              </div>
+            )}
+
+            {/* CHAT INPUT FORM: AX Transaction Finalizer */}
+            <form onSubmit={handleSubmitAgenticRequest} className="relative pt-4 mt-4 border-t border-slate-100 shrink-0">
+              <input
+                type="text"
+                value={naturalLanguageInput}
+                onChange={e => setNaturalLanguageInput(e.target.value)}
+                placeholder="Speak naturally or describe treatment details (e.g., Extend authorized access until Friday)..."
+                disabled={isProcessingContract || simPhase !== 'idle'}
+                className="w-full pl-4 pr-12 py-3.5 bg-slate-50 border border-slate-200 text-xs rounded-xl text-slate-800 font-semibold focus:outline-none focus:border-teal-500 transition shadow-inner disabled:opacity-50"
+              />
+              <button 
+                type="submit" disabled={isProcessingContract || !naturalLanguageInput.trim() || simPhase !== 'idle'}
+                className="absolute right-2.5 top-1/2 -translate-y-[4px] p-2 bg-slate-900 hover:bg-slate-800 disabled:bg-slate-200 rounded-xl transition text-white disabled:text-slate-400 shadow-lg"
+              >
+                <SendHorizontal className="w-4 h-4" />
+              </button>
+            </form>
+          </div>
+        </div>
+
+        {/* VIEWPORT PANEL B: RE-ENGINEERED TO EMBED HIGH-FIDELITY WALLET HANDSHAKE SIMULATION TIMELINES */}
+        <div className="lg:col-span-2 bg-white border border-slate-200 rounded-2xl p-6 shadow-sm flex flex-col items-center justify-center min-h-[480px] text-center relative overflow-hidden">
           
-          <div className="grid grid-cols-1 sm:grid-cols-2 gap-4">
-            <div className="space-y-1">
-              <label className="text-xs font-semibold text-slate-600">Patient Full Name</label>
-              <input 
-                type="text" placeholder="e.g., Amit Kumar" value={newName} onChange={e => setNewName(e.target.value)}
-                className="w-full border border-slate-200 p-2 text-xs rounded-lg bg-slate-50 focus:outline-teal-500"
-              />
+          {simPhase === 'generating' && (
+            <div className="space-y-3 animate-pulse text-left">
+              <div className="w-44 h-44 bg-slate-100 rounded-xl flex items-center justify-center border border-slate-200/60 mx-auto">
+                <QrCode className="w-16 h-16 text-slate-300 animate-spin" />
+              </div>
+              <p className="text-xs font-semibold text-slate-500 font-mono tracking-wider pt-2 text-center">Deploying Smart Contract State Parameter Nodes...</p>
             </div>
-            <div className="space-y-1">
-              <label className="text-xs font-semibold text-slate-600">Mobile Phone Number</label>
-              <input 
-                type="text" placeholder="e.g., +91 99999 88888" value={newPhone} onChange={e => setNewPhone(e.target.value)}
-                className="w-full border border-slate-200 p-2 text-xs rounded-lg bg-slate-50 focus:outline-teal-500"
-              />
+          )}
+
+          {simPhase === 'idle' && (
+            <div className="space-y-2 max-w-xs p-4">
+              <div className="w-12 h-12 bg-slate-50 border border-slate-200 text-slate-400 rounded-full flex items-center justify-center mx-auto mb-2">
+                <QrCode className="w-6 h-6" />
+              </div>
+              <h4 className="text-xs font-bold text-slate-700">Awaiting Agent Finalization</h4>
+              <p className="text-[11px] text-slate-400 leading-relaxed m-0">
+                Configure treatment package requirements on the left, then click submit to draw the live transaction QR contract.
+              </p>
             </div>
-          </div>
+          )}
 
-          <div className="space-y-1">
-            <label className="text-xs font-semibold text-slate-600">What fields are they approving?</label>
-            <select 
-              value={newPurpose} onChange={e => setNewPurpose(e.target.value)}
-              className="w-full border border-slate-200 p-2 text-xs rounded-lg bg-slate-50 focus:outline-teal-500"
-            >
-              <option value="Treatment + Reports">Medical Treatment & Digital Report Delivery only</option>
-              <option value="Treatment Only">Strictly Medical Treatment logs only</option>
-              <option value="Treatment + Reports + Marketing">Treatment, Digital Reports, & Promotional SMS updates</option>
-            </select>
-          </div>
+          {simPhase === 'deployed' && activeQrPayload && (
+            <div className="w-full space-y-4 animate-scaleUp">
+              <div className="bg-slate-950 p-4 rounded-xl border border-slate-800 w-48 h-48 mx-auto flex flex-col items-center justify-center relative shadow-lg">
+                <div className="w-full h-full border-4 border-dashed border-teal-500/40 rounded flex items-center justify-center relative p-2">
+                  <QrCode className="w-36 h-36 text-white" />
+                  <div className="absolute p-1 bg-slate-950 rounded border border-teal-500 text-teal-400">
+                    <ShieldCheck className="w-4 h-4" />
+                  </div>
+                </div>
+              </div>
 
-          <div className="flex justify-end space-x-2 pt-2 text-xs">
-            <button type="button" onClick={() => setShowAddForm(false)} className="px-3 py-1.5 border border-slate-200 rounded-lg font-medium text-slate-600 hover:bg-slate-50">Cancel</button>
-            <button type="submit" className="px-4 py-1.5 bg-teal-600 text-white rounded-lg font-bold hover:bg-teal-500 shadow-sm">Save & Lock Authorization</button>
-          </div>
-        </form>
-      )}
+              <div className="space-y-2">
+                <span className="inline-flex items-center space-x-1 px-2 py-0.5 bg-emerald-50 text-emerald-700 border border-emerald-100 text-[10px] font-bold rounded-md">
+                  <CheckCircle2 className="w-3 h-3 text-emerald-600" />
+                  <span>Active Patient Approval Link (30s)</span>
+                </span>
+                <p className="text-[11px] font-bold text-slate-800 pt-1">Awaiting for patient approval...</p>
+                
+                {/* INVESTOR PRESENTER TRIGGER BUTTON */}
+                <button
+                  type="button"
+                  onClick={runLiveHandshakeSimulation}
+                  className="opacity-0 w-full py-2.5 bg-slate-900 hover:bg-slate-800 text-white font-bold text-xs rounded-xl tracking-wide uppercase shadow transition"
+                >
+                  Simulate Patient UPI Scan ⚡
+                </button>
+              </div>
+            </div>
+          )}
 
-      {/* FILTER SEARCH TOOLBAR */}
-      <div className="w-full max-w-md relative">
-        <span className="absolute inset-y-0 left-0 pl-3 flex items-center pointer-events-none text-slate-400">
-          <Search className="w-4 h-4" />
-        </span>
-        <input
-          type="text"
-          placeholder="Search by patient name or mobile phone number..."
-          value={searchTerm}
-          onChange={(e) => setSearchTerm(e.target.value)}
-          className="w-full pl-9 pr-4 py-2 border border-slate-200 bg-white rounded-xl text-xs shadow-sm focus:outline-none focus:border-slate-400 text-slate-800 placeholder-slate-400"
-        />
+          {/* SLICK STAGE 1: PATIENT SCANNING TIMELINE ANIMATION VIEWPORT (1.5s) */}
+          {simPhase === 'scanning' && (
+            <div className="space-y-4 animate-fadeIn">
+              <div className="w-24 h-24 bg-teal-500/10 border border-teal-500/30 rounded-full flex items-center justify-center mx-auto relative">
+                <Smartphone className="w-10 h-10 text-teal-600 relative z-10" />
+                <span className="absolute inset-0 rounded-full border border-teal-500 animate-ping opacity-60" />
+              </div>
+              <div className="space-y-1">
+                <h4 className="text-xs font-black text-slate-800 uppercase tracking-wider">1. Scan Detected! </h4>
+                <p className="text-[11px] text-slate-400 max-w-xs mx-auto leading-relaxed">
+                  Scan successful. Accessing required matrices...
+                </p>
+              </div>
+            </div>
+          )}
+
+          {/* SLAGE STAGE 2: IOMe RE-ROUTING COMPILATION PROGRESS BAR (2.0s) */}
+          {simPhase === 'syncing' && (
+            <div className="space-y-4 animate-fadeIn w-full px-2">
+              <div className="w-12 h-12 bg-slate-900 rounded-xl flex items-center justify-center mx-auto text-emerald-400">
+                <Layers className="w-5 h-5 animate-spin" />
+              </div>
+              <div className="space-y-2">
+                <h4 className="text-xs font-black text-slate-800 uppercase tracking-wider">2. Synchronizing Token Consent</h4>
+                <p className="text-[11px] text-slate-400 max-w-xs mx-auto leading-relaxed">
+                  Signing access boundaries via IOMe ID and distributing files rules data array on MOI Smart Contract block layer.
+                </p>
+                <div className="w-full bg-slate-100 h-1 rounded-full overflow-hidden">
+                  <div className="bg-emerald-500 h-full w-2/3 rounded-full animate-pulse" />
+                </div>
+              </div>
+            </div>
+          )}
+
+        </div>
       </div>
 
-      {/* DATA PATIENT LISTING LEDGER SHEET */}
-      <div className="bg-white rounded-2xl border border-slate-200/90 shadow-sm overflow-hidden">
-        <div className="overflow-x-auto">
-          <table className="w-full text-left border-collapse">
-            <thead>
-              <tr className="bg-slate-50 border-b border-slate-200 text-slate-400 text-[10px] font-bold tracking-wider uppercase">
-                <th className="py-3 px-4">Patient Profile Details</th>
-                <th className="py-3 px-4">Approved Permissions</th>
-                <th className="py-3 px-4">Date Documented</th>
-                <th className="py-3 px-4 text-center">Current Legal Status</th>
-                <th className="py-3 px-4 text-right">Actions</th>
-              </tr>
-            </thead>
-            <tbody className="divide-y divide-slate-100 text-xs">
-              {filteredConsents.length === 0 ? (
-                <tr>
-                  <td colSpan="5" className="py-8 text-center text-slate-400 font-medium">No patient records found matching your search term.</td>
+      {/* ANONYMIZED LEDGER TRANSACTION TRACK SHEET LEDGER CONTAINER SHEET */}
+      <div className="space-y-3 pt-4">
+        <h3 className="text-xs font-bold text-slate-400 uppercase tracking-wider pl-1">Compliance History Records Ledger</h3>
+        <div className="bg-white rounded-2xl border border-slate-200 shadow-sm overflow-hidden">
+          <div className="overflow-x-auto">
+            <table className="w-full text-left border-collapse text-xs">
+              <thead>
+                <tr className="bg-slate-50 border-b border-slate-200 text-slate-400 text-[10px] font-bold uppercase tracking-wider">
+                  <th className="py-3 px-4">Patient Profile ID</th>
+                  <th className="py-3 px-4">Authorized Permission Scope</th>
+                  <th className="py-3 px-4">Date Documented</th>
+                  <th className="py-3 px-4 text-center">Status</th>
+                  <th className="py-3 px-4 text-right">Audit Trail</th>
                 </tr>
-              ) : (
-                filteredConsents.map((patient) => (
+              </thead>
+              <tbody className="divide-y divide-slate-100">
+                {consents.map((patient) => (
                   <tr key={patient.id} className="hover:bg-slate-50/60 transition group">
-                    
-                    {/* Patient Name & Mobile Details */}
-                    <td className="py-3.5 px-4">
-                      <p className="font-bold text-slate-800">{patient.name}</p>
-                      <p className="text-slate-400 text-[11px] mt-0.5">{patient.phone}</p>
+                    <td className="py-3.5 px-4 font-bold font-mono text-slate-700">
+                      {patient.name.startsWith('did:iome:') ? patient.name : 'did:iome:id_' + Math.floor(patient.id / 100000)}
                     </td>
-                    
-                    {/* Approved Permissions Category */}
-                    <td className="py-3.5 px-4 font-medium text-slate-600">
-                      {patient.purpose}
-                    </td>
-                    
-                    {/* Logged Date */}
-                    <td className="py-3.5 px-4 text-slate-400">
-                      {patient.date}
-                    </td>
-                    
-                    {/* Explicit Compliance Color Badge Status */}
+                    <td className="py-3.5 px-4 font-medium text-slate-600">{patient.purpose}</td>
+                    <td className="py-3.5 px-4 text-slate-400">{patient.date}</td>
                     <td className="py-3.5 px-4 text-center">
                       <span className={`inline-flex items-center space-x-1 px-2.5 py-0.5 rounded-full text-[10px] font-bold ${
-                        patient.status === 'Active' 
-                          ? 'bg-emerald-50 text-emerald-700 border border-emerald-100' 
-                          : 'bg-amber-50 text-amber-700 border border-amber-100'
+                        patient.status === 'Active' ? 'bg-emerald-50 text-emerald-700 border border-emerald-100' : 'bg-amber-50 text-amber-700 border border-amber-100'
                       }`}>
-                        {patient.status === 'Active' ? (
-                          <>
-                            <CheckCircle className="w-3 h-3 text-emerald-600" />
-                            <span>Approved & Safe</span>
-                          </>
-                        ) : (
-                          <>
-                            <XCircle className="w-3 h-3 text-amber-600" />
-                            <span>Withdrawn / Locked</span>
-                          </>
-                        )}
+                        <span>{patient.status === 'Active' ? "Approved & Verified" : "Withdrawn"}</span>
                       </span>
                     </td>
-                    
-                    {/* Functional Quick Actions Hub Grid */}
                     <td className="py-3.5 px-4 text-right">
-                      <div className="flex items-center justify-end space-x-2">
-                        <button
-                          onClick={() => handleToggleStatus(patient.id, patient.status, patient.name)}
-                          className={`px-2.5 py-1 text-[11px] font-bold rounded-lg border transition ${
-                            patient.status === 'Active'
-                              ? 'bg-white hover:bg-amber-50 text-amber-700 border-slate-200 hover:border-amber-200'
-                              : 'bg-teal-600 hover:bg-teal-500 text-white border-transparent shadow-sm'
-                          }`}
-                        >
-                          {patient.status === 'Active' ? "Revoke Consent" : "Re-Approve Link"}
-                        </button>
-                        
-                        <button
-                          onClick={() => handleViewProof(patient)}
-                          className="px-2.5 py-1 bg-slate-50 hover:bg-slate-100 text-slate-700 text-[11px] font-bold rounded-lg border border-slate-200 flex items-center space-x-1"
-                        >
-                          <Eye className="w-3 h-3 text-teal-600" />
-                          <span>View Digital Receipt</span>
-                        </button>
-                      </div>
+                      <button
+                        onClick={() => handleOpenReceiptModal(patient)}
+                        className="px-2.5 py-1 bg-slate-50 hover:bg-slate-100 text-slate-700 font-bold border border-slate-200 rounded-lg transition inline-flex items-center space-x-1"
+                      >
+                        <Eye className="w-3.5 h-3.5 text-teal-600" />
+                        <span>View Receipt</span>
+                      </button>
                     </td>
-
                   </tr>
-                ))
-              )}
-            </tbody>
-          </table>
+                ))}
+              </tbody>
+            </table>
+          </div>
         </div>
       </div>
 
-      {/* MODAL AUDIT WINDOW OVERLAY */}
+      {/* CRYPTOGRAPHIC VERIFICATION RECEIPT MODAL DRAWER OVERLAY */}
       {activeReceipt && (
-        <div className="fixed inset-0 z-50 bg-slate-950/60 backdrop-blur-sm flex items-center justify-center p-4 animate-fadeIn">
-          <div className="bg-white border border-slate-200 p-6 rounded-2xl shadow-2xl max-w-md w-full font-sans text-slate-800">
+        <div className="fixed inset-0 z-[9999] bg-slate-950/80 backdrop-blur-md flex items-center justify-center p-4 shadow-2xl animate-fadeIn">
+          <div className="bg-white border border-slate-200 p-6 rounded-2xl shadow-2xl max-w-md w-full font-sans text-slate-800 text-left relative transform scale-100 transition-all">
             <div className="flex items-center space-x-2 text-teal-600 font-bold text-sm mb-4 pb-2 border-b border-slate-100">
               <ShieldCheck className="w-5 h-5 text-teal-500" />
               <span>Official Patient Consent Receipt</span>
             </div>
-            
+
             <div className="space-y-3.5 text-xs">
-              <div className="grid grid-cols-2 gap-2 bg-slate-50 p-3 rounded-xl border border-slate-100">
-                <div>
-                  <span className="text-slate-400 block text-[10px] font-bold uppercase">Patient Name:</span>
-                  <p className="text-slate-900 font-bold">{activeReceipt.name}</p>
-                </div>
-                <div>
-                  <span className="text-slate-400 block text-[10px] font-bold uppercase">Current Legal Status:</span>
-                  <p className={`font-bold ${activeReceipt.status === 'Active' ? 'text-emerald-600' : 'text-amber-600'}`}>
-                    ● {activeReceipt.status === 'Active' ? "Authorized" : "Withdrawn"}
-                  </p>
-                </div>
+              <div className="bg-slate-50 p-3 rounded-xl border border-slate-100 flex justify-between items-center">
+                <span className="text-slate-400 block font-bold text-[10px] uppercase">Identity Ledger Mapping:</span>
+                <p className="text-emerald-600 font-bold">● {activeReceipt.status === 'Active' ? 'Authorized Node' : 'Privileges Withdrawn'}</p>
               </div>
 
               <div>
-                <span className="text-slate-400 block font-semibold uppercase tracking-wider text-[10px]">Approved Access Limits:</span>
+                <span className="text-slate-400 block font-bold text-[10px] uppercase">Authorized Permissions Scope:</span>
                 <p className="text-slate-800 font-medium mt-0.5 bg-slate-50 px-2.5 py-1.5 rounded-lg border border-slate-100">{activeReceipt.purpose}</p>
               </div>
 
               <div>
-                <span className="text-slate-400 block font-semibold uppercase tracking-wider text-[10px]">Tamper-Proof Audit Hash:</span>
-                <p className="font-mono bg-slate-50 p-2.5 rounded-lg border border-slate-200 text-slate-600 break-all select-all mt-1">{activeReceipt.digitalLock}</p>
+                <span className="text-slate-400 block font-bold text-[10px] uppercase">Tamper-Proof Kapsul Root Hash:</span>
+                <p className="font-mono bg-slate-50 p-2.5 rounded-lg border border-slate-200 text-slate-600 break-all select-all mt-1">{activeReceipt.blockHash}</p>
               </div>
 
               <div>
-                <span className="text-slate-400 block font-semibold uppercase tracking-wider text-[10px]">Decentralized Facility Node Key:</span>
-                <p className="font-mono bg-slate-50 p-2.5 rounded-lg border border-slate-200 text-teal-700 mt-1">{activeReceipt.signatureKey}</p>
+                <span className="text-slate-400 block font-bold text-[10px] uppercase">Smart Contract Identity Proof (IOMe Gateway):</span>
+                <p className="font-mono bg-slate-50 p-2.5 rounded-lg border border-slate-200 text-teal-700 break-all mt-1">{activeReceipt.nodeKey}</p>
               </div>
 
               <div className="pt-2 border-t border-slate-100 flex items-center justify-between text-[11px] text-slate-400">
-                <span>Document Timestamp:</span>
-                <span className="font-medium text-slate-700">{activeReceipt.timestamp}</span>
+                <span>Verification Time Anchor:</span>
+                <span className="font-medium text-slate-700">{activeReceipt.date}</span>
               </div>
             </div>
 
             <button 
               onClick={() => setActiveReceipt(null)}
-              className="mt-6 w-full text-center py-2.5 bg-slate-900 hover:bg-slate-800 text-white font-bold text-xs rounded-xl transition shadow-sm"
+              className="mt-6 w-full text-center py-2.5 bg-slate-900 hover:bg-slate-800 text-white font-bold text-xs rounded-xl transition shadow-sm font-bold uppercase tracking-wider"
             >
               Close Receipt Window
             </button>

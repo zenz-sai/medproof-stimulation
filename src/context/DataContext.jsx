@@ -5,10 +5,10 @@ const DataContext = createContext();
 export function DataProvider({ children }) {
   // --- DEFAULT SEEDED DATA ---
   const initialConsents = [
-    { id: 1, name: 'Priya Sharma', phone: '+91 98765 43210', purpose: 'Treatment + Reports', date: 'Today, 10:32 AM', status: 'Active', proofHash: '0x3a1b4c...iome' },
-    { id: 2, name: 'Rahul Verma', phone: '+91 87654 32109', purpose: 'Treatment Only', date: 'Today, 09:15 AM', status: 'Active', proofHash: '0x9e2f5d...iome' },
-    { id: 3, name: 'Anita Patel', phone: '+91 76543 21098', purpose: 'Treatment + Marketing', date: 'Yesterday', status: 'Active', proofHash: '0x7c8b1a...iome' },
-    { id: 4, name: 'Vikram Singh', phone: '+91 65432 10987', purpose: 'Treatment + Reports', date: 'Jan 22, 2026', status: 'Withdrawn', proofHash: '0x4f5e6d...iome' }
+    { id: 190249029, name: 'Priya Sharma', phone: '+91 98765 43210', purpose: 'Treatment + Reports', date: 'Today, 10:32 AM', status: 'Active', proofHash: '0x3a1b4c...iome' },
+    { id: 393904000400, name: 'Rahul Verma', phone: '+91 87654 32109', purpose: 'Treatment Only', date: 'Today, 09:15 AM', status: 'Active', proofHash: '0x9e2f5d...iome' },
+    { id: 249249029029, name: 'Anita Patel', phone: '+91 76543 21098', purpose: 'Treatment + Marketing', date: 'Yesterday', status: 'Active', proofHash: '0x7c8b1a...iome' },
+    { id: 58332023, name: 'Vikram Singh', phone: '+91 65432 10987', purpose: 'Treatment + Reports', date: 'Jan 22, 2026', status: 'Withdrawn', proofHash: '0x4f5e6d...iome' }
   ];
 
   const initialReports = [
