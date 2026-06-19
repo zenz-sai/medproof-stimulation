@@ -12,15 +12,13 @@ export function DataProvider({ children }) {
   ];
 
   const initialReports = [
-    { id: 1, name: 'Priya Sharma', test: 'Blood Test', sent: '10:32 AM', delivered: '10:32 AM', viewed: '10:45 AM', status: 'Viewed' },
-    { id: 2, name: 'Rahul Verma', test: 'X-Ray Report', sent: '09:15 AM', delivered: '09:15 AM', viewed: '09:30 AM', status: 'Viewed' },
-    { id: 3, name: 'Anita Patel', test: 'MRI Scan', sent: '08:45 AM', delivered: '08:45 AM', viewed: null, status: 'Delivered' },
-    { id: 4, name: 'Vikram Singh', test: 'Blood Test', sent: '08:00 AM', delivered: 'Pending', viewed: null, status: 'Pending' }
+    { id: 190249029, name: 'Priya Sharma', test: 'Blood Test', sent: '10:32 AM', delivered: 'Locked in Wallet', viewed: '10:45 AM', status: 'Viewed', blockchainHash: '0x9e2f5d7c8b1a4f5e6d...', signature: '0x3a1b4c9e2f5d7c8b1a...' },
+    { id: 58332023, name: 'Rahul Verma', test: 'X-Ray Report', sent: '09:15 AM', delivered: 'Locked in Wallet', viewed: '09:30 AM', status: 'Viewed', blockchainHash: '0x7c8b1a9e2f5d7c8b1a...', signature: '0x4f5e6d7c8b1a4f5e6d...' }
   ];
 
   const initialActivity = [
-    { id: 1, user: 'Priya Sharma', action: 'Consent collected', time: '2 min ago' },
-    { id: 2, user: 'Rahul Verma', action: 'Lab report delivered', time: '5 min ago' }
+    { id: 1, user: 'System Hub', action: 'Decentralized IOMe Node Gateway Active', time: '2 min ago' },
+    { id: 2, user: 'IOMe Gateway', action: 'Token handshake verified: State anchored on ledger', time: '5 min ago' }
   ];
 
   const [consents, setConsents] = useState(() => JSON.parse(localStorage.getItem('mp_consents')) || initialConsents);
@@ -28,28 +26,26 @@ export function DataProvider({ children }) {
   const [activities, setActivities] = useState(() => JSON.parse(localStorage.getItem('mp_activities')) || initialActivity);
   const [breachState, setBreachState] = useState(() => JSON.parse(localStorage.getItem('mp_breach')) || { active: false, timestamp: null, elapsed: 0 });
   const [currentSession, setCurrentSession] = useState(() => JSON.parse(localStorage.getItem('mp_active_session')) || null);
+  
+  // NEW: Realtime state bucket keeping incoming wallet authorizations in sync across open tabs
+  const [activeWalletRequests, setActiveWalletRequests] = useState(() => JSON.parse(localStorage.getItem('mp_wallet_requests')) || []);
 
   // --- CROSS-TAB REALTIME SYNCHRONIZER ENGINE ---
   useEffect(() => {
     const handleCrossTabUpdates = (event) => {
-      if (event.key === 'mp_consents' && event.newValue) {
-        setConsents(JSON.parse(event.newValue));
-      }
-      if (event.key === 'mp_reports' && event.newValue) {
-        setReports(JSON.parse(event.newValue));
-      }
-      if (event.key === 'mp_activities' && event.newValue) {
-        setActivities(JSON.parse(event.newValue));
-      }
-      if (event.key === 'mp_breach' && event.newValue) {
-        setBreachState(JSON.parse(event.newValue));
-      }
-      if (event.key === 'mp_active_session') {
-        setCurrentSession(event.newValue ? JSON.parse(event.newValue) : null);
+      if (!event.newValue) return;
+      try {
+        if (event.key === 'mp_consents') setConsents(JSON.parse(event.newValue));
+        if (event.key === 'mp_reports') setReports(JSON.parse(event.newValue));
+        if (event.key === 'mp_activities') setActivities(JSON.parse(event.newValue));
+        if (event.key === 'mp_breach') setBreachState(JSON.parse(event.newValue));
+        if (event.key === 'mp_active_session') setCurrentSession(JSON.parse(event.newValue));
+        if (event.key === 'mp_wallet_requests') setActiveWalletRequests(JSON.parse(event.newValue));
+      } catch (err) {
+        console.error("Cross-tab synchronization parse exception: ", err);
       }
     };
 
-    // Listen to changes coming from other browser tabs
     window.addEventListener('storage', handleCrossTabUpdates);
     return () => window.removeEventListener('storage', handleCrossTabUpdates);
   }, []);
@@ -59,43 +55,40 @@ export function DataProvider({ children }) {
   useEffect(() => { localStorage.setItem('mp_activities', JSON.stringify(activities)); }, [activities]);
   useEffect(() => { localStorage.setItem('mp_breach', JSON.stringify(breachState)); }, [breachState]);
   useEffect(() => { localStorage.setItem('mp_active_session', JSON.stringify(currentSession)); }, [currentSession]);
+  useEffect(() => { localStorage.setItem('mp_wallet_requests', JSON.stringify(activeWalletRequests)); }, [activeWalletRequests]);
 
   const triggerSimulationAction = async (type) => {
-    if (type === 'WITHDRAW_PRIYA') {
-      const updated = consents.map(c => c.name === 'Priya Sharma' ? { ...c, status: 'Withdrawn' } : c);
-      setConsents(updated);
-      const acts = [{ id: Date.now(), user: 'Priya Sharma', action: 'Consent withdrawn via patient portal', time: 'Just now' }, ...activities];
+    if (type === 'BREACH_TRIGGER') {
+      const emergencyState = { active: true, timestamp: new Date().toLocaleTimeString(), elapsed: 0 };
+      setBreachState(emergencyState);
+      const acts = [{ id: Date.now(), user: 'System Sec', action: 'Data anomaly detected: 72H countdown initialized', time: 'Just now' }, ...activities];
       setActivities(acts);
-      // Explicitly trigger a local dispatch so current window reacts immediately if triggered locally
-      localStorage.setItem('mp_consents', JSON.stringify(updated));
+      
+      localStorage.setItem('mp_breach', JSON.stringify(emergencyState));
       localStorage.setItem('mp_activities', JSON.stringify(acts));
-    } else if (type === 'SIMULATE_BATCH_LAB') {
-      const newReport = { 
-        id: Date.now(), 
-        name: 'Priya Sharma', 
-        test: 'Routine CBC Test', 
-        sent: 'Just now', 
-        delivered: 'Just now', 
-        viewed: null, 
-        status: 'Delivered',
-        simulatedLink: `${window.location.origin}/user?access=token_${Math.floor(Math.random() * 900000 + 100000)}&from=${currentSession ? encodeURIComponent(currentSession.name) : 'Provider'}`
-      };
-      setReports(prev => [newReport, ...prev]);
-      setActivities(prev => [{ id: Date.now(), user: 'Priya Sharma', action: 'Bulk verified & auto-routed', time: 'Just now' }, ...prev]);
-    } else if (type === 'BREACH_TRIGGER') {
-      setBreachState({ active: true, timestamp: new Date().toLocaleTimeString(), elapsed: 0 });
-      setActivities(prev => [{ id: Date.now(), user: 'System Sec', action: 'Data anomaly detected: 72H countdown initialized', time: 'Just now' }, ...prev]);
-    } else if (type === 'CLEAR_ALL') {
+    } 
+    
+    else if (type === 'CLEAR_ALL') {
       localStorage.clear();
       setConsents(initialConsents);
       setReports(initialReports);
       setActivities(initialActivity);
       setBreachState({ active: false, timestamp: null, elapsed: 0 });
+      setActiveWalletRequests([]);
+      setCurrentSession(null);
     }
   };
 
   return (
-    <DataContext.Provider value={{ consents, setConsents, reports, setReports, activities, setActivities, breachState, currentSession, setCurrentSession, triggerSimulationAction }}>
+    <DataContext.Provider value={{ 
+      consents, setConsents, 
+      reports, setReports, 
+      activities, setActivities, 
+      breachState, setBreachState,
+      currentSession, setCurrentSession, 
+      activeWalletRequests, setActiveWalletRequests,
+      triggerSimulationAction 
+    }}>
       {children}
     </DataContext.Provider>
   );

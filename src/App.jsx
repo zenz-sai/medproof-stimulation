@@ -28,8 +28,8 @@ function AppContent() {
   }, []);
 
   const facilitiesList = [
-    { id: 'city', name: 'City Community Hospital', location: 'Coimbatore, South India', tier: 'Small Hospital', baseConsents: 1243 },
-    { id: 'alpha', name: 'Alpha Reference Diagnostic Labs', location: 'Tier-2 Main Hub', tier: 'Diagnostic Lab', baseConsents: 4890 },
+    { id: 'city', name: 'City Community Hospital', location: 'Gachibowli, Hyderabad', tier: 'Small Hospital', baseConsents: 1243 },
+    { id: 'alpha', name: 'Alpha Reference Diagnostic Labs', location: 'Coimbatore, South India', tier: 'Diagnostic Lab', baseConsents: 4890 },
     { id: 'apollo-smb', name: 'MedTrust Nursing Home & Clinic', location: 'Trichy Region', tier: 'Clinic', baseConsents: 312 }
   ];
 
@@ -72,7 +72,7 @@ function AppContent() {
     return (
       <div className="min-h-screen w-screen bg-slate-950 flex flex-col md:flex-row font-sans text-slate-100 overflow-x-hidden">
         <div className="w-full md:w-[45%] bg-slate-900 flex flex-col justify-between p-8 border-r border-slate-800/60 shadow-2xl min-h-screen">
-          <div className="flex items-center space-x-3">
+          {/* <div className="flex items-center space-x-3">
             <div className="p-2.5 bg-teal-500/10 border border-teal-500/30 rounded-xl text-teal-400">
               <Shield className="w-5 h-5" />
             </div>
@@ -80,7 +80,8 @@ function AppContent() {
               <span className="text-[10px] font-black tracking-widest text-teal-400 uppercase block">Secure Gateway</span>
               <h2 className="text-sm font-bold text-white m-0">MedProof Decentralized Access</h2>
             </div>
-          </div>
+          </div> */}
+          <img src="/logo.svg" height="256" width="256" />
 
           <div className="max-w-sm w-full mx-auto space-y-6 py-12">
             <div className="space-y-1.5 text-left">
@@ -143,10 +144,10 @@ function AppContent() {
                     {isAuthenticating ? (
                       <>
                         <Loader2 className="w-4 h-4 animate-spin text-white" />
-                        <span>Verifying Node Keys...</span>
+                        <span>Authenticating...</span>
                       </>
                     ) : (
-                      <span>Unlock System Ledger Dashboard</span>
+                      <span>Unlock</span>
                     )}
                   </button>
                 </form>
@@ -155,7 +156,7 @@ function AppContent() {
           </div>
 
           <div className="text-[10px] text-slate-600 font-bold uppercase tracking-wider text-center">
-            ✓ Connected to MOI Node Trust Infrastructure
+            ✓ Powered by MOI.TECHNOLOGY
           </div>
         </div>
 

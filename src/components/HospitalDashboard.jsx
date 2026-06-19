@@ -32,7 +32,7 @@ export default function HospitalDashboard() {
       <div className="bg-linear-to-r from-slate-900 via-slate-850 to-slate-900 text-white p-6 rounded-2xl border border-slate-800 shadow-xl flex flex-col md:flex-row md:items-center justify-between gap-4">
         <div className="space-y-1">
           <div className="flex items-center space-x-2">
-            <h1 className="text-xl font-bold tracking-tight">City Hospital Compliance Control Panel</h1>
+            <h1 className="text-xl font-bold tracking-tight">Alpha Reference Diagnostic labs</h1>
             <button onClick={() => setShowHelp(!showHelp)} className="text-teal-400 hover:text-teal-300 transition" title="How this works">
               <HelpCircle className="w-4 h-4" />
             </button>
@@ -42,13 +42,13 @@ export default function HospitalDashboard() {
           </p>
         </div>
         
-        <div className="flex items-center space-x-3 bg-slate-950/60 px-4 py-2 rounded-xl border border-slate-800 self-start md:self-auto">
+        {/* <div className="flex items-center space-x-3 bg-slate-950/60 px-4 py-2 rounded-xl border border-slate-800 self-start md:self-auto">
           <ShieldCheck className="w-5 h-5 text-teal-400" />
           <div className="text-left">
             <p className="text-[10px] uppercase tracking-wider text-slate-500 font-bold">Storage Status</p>
             <p className="text-xs font-semibold text-teal-400">Secured on Hospital Node</p>
           </div>
-        </div>
+        </div> */}
       </div>
 
       {/* QUICK HELP INSIGHT DRAWER */}
@@ -181,13 +181,13 @@ export default function HospitalDashboard() {
             
             <div className="bg-slate-950/60 p-4 rounded-xl border border-slate-800/80 space-y-2.5 text-xs">
               <div className="flex items-center justify-between text-slate-400">
-                <span>Hospital Node ID:</span>
-                <span className="font-mono text-[11px] text-slate-200">CITY-HOSP-FDU</span>
+                <span>Facility ID:</span>
+                <span className="font-mono text-[11px] text-slate-200">ALPHA_REF_FID_AI2022</span>
               </div>
-              <div className="flex items-center justify-between text-slate-400">
-                <span>Encryption Keys:</span>
+              {/* <div className="flex items-center justify-between text-slate-400">
+                <span>Storage: </span>
                 <span className="text-emerald-400 font-semibold">Active & Secured</span>
-              </div>
+              </div> */}
             </div>
           </div>
 

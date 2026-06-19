@@ -114,7 +114,7 @@ export default function ConsentCollection() {
         
         const newLedgerRow = {
           id: Date.now(),
-          name: randomizedPatientNodeId, 
+          name: 'Siva Sankar', 
           purpose: `${activeTargetModules} (${activeTargetScope})`,
           date: 'Just now',
           status: 'Active'
@@ -230,14 +230,14 @@ export default function ConsentCollection() {
         </div>
 
         {/* VIEWPORT PANEL B: RE-ENGINEERED TO EMBED HIGH-FIDELITY WALLET HANDSHAKE SIMULATION TIMELINES */}
-        <div className="lg:col-span-2 bg-white border border-slate-200 rounded-2xl p-6 shadow-sm flex flex-col items-center justify-center min-h-[480px] text-center relative overflow-hidden">
+        <div className="lg:col-span-2 bg-white border border-slate-200 rounded-2xl p-6 shadow-sm flex flex-col items-center justify-center min-h-120 text-center relative overflow-hidden">
           
           {simPhase === 'generating' && (
             <div className="space-y-3 animate-pulse text-left">
               <div className="w-44 h-44 bg-slate-100 rounded-xl flex items-center justify-center border border-slate-200/60 mx-auto">
                 <QrCode className="w-16 h-16 text-slate-300 animate-spin" />
               </div>
-              <p className="text-xs font-semibold text-slate-500 font-mono tracking-wider pt-2 text-center">Deploying Smart Contract State Parameter Nodes...</p>
+              <p className="text-xs font-semibold text-slate-500 font-mono tracking-wider pt-2 text-center">Generating Context-specific Compliance QR Code</p>
             </div>
           )}
 
@@ -291,7 +291,7 @@ export default function ConsentCollection() {
                 <span className="absolute inset-0 rounded-full border border-teal-500 animate-ping opacity-60" />
               </div>
               <div className="space-y-1">
-                <h4 className="text-xs font-black text-slate-800 uppercase tracking-wider">1. Scan Detected! </h4>
+                <h4 className="text-xs font-black text-slate-800 uppercase tracking-wider">1. Scan Detected </h4>
                 <p className="text-[11px] text-slate-400 max-w-xs mx-auto leading-relaxed">
                   Scan successful. Accessing required matrices...
                 </p>
@@ -306,9 +306,9 @@ export default function ConsentCollection() {
                 <Layers className="w-5 h-5 animate-spin" />
               </div>
               <div className="space-y-2">
-                <h4 className="text-xs font-black text-slate-800 uppercase tracking-wider">2. Synchronizing Token Consent</h4>
+                <h4 className="text-xs font-black text-slate-800 uppercase tracking-wider">2. Synchronizing Consent</h4>
                 <p className="text-[11px] text-slate-400 max-w-xs mx-auto leading-relaxed">
-                  Signing access boundaries via IOMe ID and distributing files rules data array on MOI Smart Contract block layer.
+                  Signing access boundaries and delegating the authorization.
                 </p>
                 <div className="w-full bg-slate-100 h-1 rounded-full overflow-hidden">
                   <div className="bg-emerald-500 h-full w-2/3 rounded-full animate-pulse" />

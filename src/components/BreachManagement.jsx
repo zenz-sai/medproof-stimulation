@@ -17,20 +17,49 @@ export default function BreachManagement() {
 
   // Sync downward clock increments based on global breach state criteria
   useEffect(() => {
-    let interval = null;
-    if (breachState.active) {
-      interval = setInterval(() => {
-        const hours = 71;
-        const mins = Math.max(0, 54 - Math.floor((Date.now() % 60000) / 1000));
-        const secs = 60 - (Math.floor(Date.now() / 1000) % 60);
-        setCountdownText(`${hours}:${mins.toString().padStart(2, '0')}:${secs.toString().padStart(2, '0')}`);
-      }, 1000);
-    } else {
-      setCountdownText('72:00:00');
-      setActiveStep(1);
-    }
-    return () => clearInterval(interval);
-  }, [breachState.active]);
+  let interval = null;
+  
+  if (breachState.active) {
+    // 1. Establish a stable reference start point or use the live stored anchor
+    const startTime = breachState.startTimeAnchor 
+      ? Number(breachState.startTimeAnchor) 
+      : Date.now();
+      
+    // 2. Set the 72-hour deadline (72 hours * 60 mins * 60 secs * 1000 ms)
+    const seventyTwoHoursInMs = 72 * 60 * 60 * 1000;
+    const targetDeadline = startTime + seventyTwoHoursInMs;
+
+    // 3. Immediately run the calculation loop on a crisp 1-second cadence
+    interval = setInterval(() => {
+      const remainingMs = targetDeadline - Date.now();
+
+      if (remainingMs <= 0) {
+        setCountdownText('00:00:00');
+        clearInterval(interval);
+        return;
+      }
+
+      // 4. Extract total units cleanly out of the remaining gap balance
+      const totalSeconds = Math.floor(remainingMs / 1000);
+      const hours = Math.floor(totalSeconds / 3600);
+      const minutes = Math.floor((totalSeconds % 3600) / 60);
+      const seconds = totalSeconds % 60;
+
+      // 5. Commit the padded string parameters to state
+      setCountdownText(
+        `${hours.toString().padStart(2, '0')}:${minutes.toString().padStart(2, '0')}:${seconds.toString().padStart(2, '0')}`
+      );
+    }, 1000);
+    
+  } else {
+    setCountdownText('72:00:00');
+    setActiveStep(1);
+  }
+
+  return () => {
+    if (interval) clearInterval(interval);
+  };
+}, [breachState.active, breachState.startTimeAnchor]);
 
   const handleBulkNotifyPatients = () => {
     setActiveStep(3);
@@ -93,17 +122,25 @@ export default function BreachManagement() {
           <div className="bg-slate-900 border border-slate-950 p-5 rounded-2xl text-slate-200 text-left space-y-3.5 shadow-xl">
             <div className="flex items-center space-x-2 text-rose-400 font-bold text-xs uppercase tracking-wider">
               <Radio className="w-4 h-4 animate-pulse" />
-              <span>Diagnostic Threat Simulator Panel</span>
+              <span>Diagnostic Threat Panel</span>
             </div>
             <p className="text-xs text-slate-400 leading-relaxed">
-              To demonstrate how MedProof protects a hospital during an emergency, click the button below to simulate an incoming threat alert (such as a misplaced work file or lost work phone).
+              Under the DPDP Act, 2023, health data (diagnoses, medical records, test results) is treated as highly sensitive. Healthcare entities must notify both the Data Protection Board of India (DPBI) and the affected patients of any personal data breach.
+              Five primary types of breaches that must be notified under the DPDP framework include: 
+            </p>
+            <p className='text-xs ml-4'>
+              <li>Unauthorized access</li>
+              <li>Accidental Exposure</li>
+              <li>Data Loss or Destruction</li>
+              <li>Unauthorized Alteration</li>
+              <li>Third-Party Vendor Breach</li>
             </p>
             <button
               type="button"
               onClick={() => triggerSimulationAction('BREACH_TRIGGER')}
               className="px-4 py-2 bg-rose-600 hover:bg-rose-500 active:bg-rose-700 text-white font-bold text-xs rounded-xl shadow-md transition uppercase tracking-wide border border-rose-500/10"
             >
-              Simulate Network Threat Event
+              Raise Network Threat Event
             </button>
           </div>
         </div>
